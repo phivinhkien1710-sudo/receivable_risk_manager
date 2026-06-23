@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "prompt",
+ "autoname": "CA-.#####",
  "creation": "2026-06-22 18:57:10.330504",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -9,6 +9,9 @@
   "receivables_customer",
   "receivables_invoice",
   "invoice_risk_assessment",
+  "external_invoice_id",
+  "customer_id",
+  "customer_name",
   "action_type",
   "priority",
   "status",
@@ -17,7 +20,8 @@
   "notes",
   "auto_generated",
   "active_invoice_key",
-  "created_from_risk_score"
+  "created_from_risk_score",
+  "last_updated_on"
  ],
  "fields": [
   {
@@ -42,11 +46,33 @@
    "options": "Invoice Risk Assessment"
   },
   {
+   "fieldname": "external_invoice_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "External Invoice ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "Customer ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
    "fieldname": "action_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Action Type",
-   "options": "Gentle Reminder\nPayment Follow-up\nEscalation\nCredit Review",
+   "options": "Escalate Collection\nImmediate Follow-up\nSend Reminder",
    "reqd": 1
   },
   {
@@ -106,6 +132,12 @@
    "label": "Created From Risk Score",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "last_updated_on",
+   "fieldtype": "Datetime",
+   "label": "Last Updated On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -115,7 +147,7 @@
  "modified_by": "Administrator",
  "module": "receivable_risk_manager",
  "name": "Collection Action",
- "naming_rule": "Set by user",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
