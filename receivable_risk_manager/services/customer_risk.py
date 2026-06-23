@@ -31,6 +31,8 @@ def recalculate_customer_risk(customer_name):
 	customer_doc.risk_score = risk["risk_score"]
 	customer_doc.risk_level = risk["risk_level"]
 	customer_doc.risk_explanation = risk["risk_explanation"]
+	if frappe.get_meta(CUSTOMER_DOCTYPE).has_field("risk_confidence"):
+		customer_doc.risk_confidence = risk.get("risk_confidence") or "Medium"
 	customer_doc.risk_last_calculated_on = now_datetime()
 	customer_doc.save(ignore_permissions=True)
 
@@ -38,6 +40,7 @@ def recalculate_customer_risk(customer_name):
 		"customer": customer_doc.name,
 		"risk_score": customer_doc.risk_score,
 		"risk_level": customer_doc.risk_level,
+		"risk_confidence": risk.get("risk_confidence") or "Medium",
 	}
 
 
