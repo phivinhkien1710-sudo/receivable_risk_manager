@@ -5,9 +5,9 @@
  "creation": "2026-06-23 13:04:43.681562",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": [
+  "field_order": [
   "invoice_id",
-  "document_id",
+  "doc_id",
   "receivables_customer",
   "customer_id",
   "customer_name",
@@ -16,8 +16,8 @@
   "posting_date",
   "due_date",
   "clear_date",
-  "document_created_date",
-  "document_created_date_1",
+  "document_create_date",
+  "document_create_date_1",
   "baseline_create_date",
   "currency",
   "document_type",
@@ -42,7 +42,7 @@
    "unique": 1
   },
   {
-   "fieldname": "document_id",
+   "fieldname": "doc_id",
    "fieldtype": "Data",
    "label": "Document ID"
   },
@@ -102,14 +102,14 @@
    "label": "Clear Date"
   },
   {
-   "fieldname": "document_created_date",
+   "fieldname": "document_create_date",
    "fieldtype": "Date",
-   "label": "Document Created Date"
+   "label": "Document Create Date"
   },
   {
-   "fieldname": "document_created_date_1",
+   "fieldname": "document_create_date_1",
    "fieldtype": "Date",
-   "label": "Document Created Date 1 "
+   "label": "Document Create Date 1"
   },
   {
    "fieldname": "baseline_create_date",
@@ -142,6 +142,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Invoice Amount",
+   "options": "currency",
    "reqd": 1
   },
   {
@@ -156,7 +157,7 @@
    "fieldname": "late_payment_status",
    "fieldtype": "Select",
    "label": "Late Payment Status",
-   "options": "Unknown\nLate\nOntime"
+   "options": "Unknown\nLate\nOn Time"
   },
   {
    "fieldname": "payment_delay_days",

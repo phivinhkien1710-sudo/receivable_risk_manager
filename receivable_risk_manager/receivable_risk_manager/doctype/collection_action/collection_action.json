@@ -95,7 +95,8 @@
   {
    "fieldname": "active_invoice_key",
    "fieldtype": "Data",
-   "label": "Active Invocie Key",
+   "hidden": 1,
+   "label": "Active Invoice Key",
    "read_only": 1,
    "unique": 1
   },
@@ -103,6 +104,7 @@
    "fieldname": "created_from_risk_score",
    "fieldtype": "Int",
    "label": "Created From Risk Score",
+   "read_only": 1,
    "search_index": 1
   }
  ],

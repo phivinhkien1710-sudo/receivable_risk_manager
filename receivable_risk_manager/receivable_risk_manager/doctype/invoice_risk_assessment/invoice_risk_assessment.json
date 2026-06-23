@@ -142,6 +142,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Invoice Amount",
+   "options": "currency",
    "read_only": 1
   },
   {

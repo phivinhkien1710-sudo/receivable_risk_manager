@@ -4,16 +4,20 @@
  "creation": "2026-06-22 18:17:32.430773",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": [
+  "field_order": [
   "receivables_customer",
+  "customer_id",
   "customer_name",
   "total_invoices",
   "closed_invoice_count",
   "open_invoice_count",
+  "currency",
   "total_invoice_amount",
+  "total_open_amount",
   "overdue_open_amount",
   "late_payment_rate",
   "average_payment_delay_days",
+  "max_days_overdue",
   "risk_score",
   "risk_level",
   "explanation",
@@ -73,6 +77,13 @@
    "unique": 1
   },
   {
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer ID",
+   "read_only": 1
+  },
+  {
    "fieldname": "customer_name",
    "fieldtype": "Data",
    "in_standard_filter": 1,
@@ -92,21 +103,43 @@
    "read_only": 1
   },
   {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
    "fieldname": "total_invoice_amount",
    "fieldtype": "Currency",
    "label": "Total Invoice Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_open_amount",
+   "fieldtype": "Currency",
+   "label": "Total Open Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
    "fieldname": "overdue_open_amount",
    "fieldtype": "Currency",
    "label": "Overdue Open Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
    "fieldname": "average_payment_delay_days",
    "fieldtype": "Float",
    "label": "Average Payment Delay Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_days_overdue",
+   "fieldtype": "Int",
+   "label": "Max Days Overdue",
    "read_only": 1
   }
  ],
