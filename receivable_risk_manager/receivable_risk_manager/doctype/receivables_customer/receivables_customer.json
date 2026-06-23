@@ -17,6 +17,10 @@
   "open_amount",
   "average_payment_delay",
   "late_payment_rate",
+  "risk_score",
+  "risk_level",
+  "risk_explanation",
+  "risk_last_calculated_on",
   "last_calculated_on",
   "invoice_count",
   "first_invoice_date",
@@ -95,6 +99,35 @@
    "fieldtype": "Percent",
    "in_list_view": 1,
    "label": "Late Payment Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "risk_score",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Risk Score",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Risk Level",
+   "options": "Low\nMedium\nHigh",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "risk_explanation",
+   "fieldtype": "Small Text",
+   "label": "Risk Explanation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "risk_last_calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Risk Last Calculated On",
    "read_only": 1
   },
   {
