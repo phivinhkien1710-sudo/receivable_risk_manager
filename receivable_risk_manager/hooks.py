@@ -148,6 +148,12 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+	"daily": [
+		"receivable_risk_manager.tasks.daily_recalculate_receivables_risk"
+	],
+}
+
 # scheduler_events = {
 # 	"all": [
 # 		"receivable_risk_manager.tasks.all"
@@ -246,4 +252,3 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-
