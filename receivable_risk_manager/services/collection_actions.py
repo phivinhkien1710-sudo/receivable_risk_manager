@@ -69,23 +69,47 @@ def get_action_from_assessment(assessment_doc, analysis_date):
 
 
 def collection_action_exists(external_invoice_id, action_type):
-	"""Return True if an unresolved matching Collection Action already exists."""
+	"""Return True if a matching Collection Action already exists.
+
+	For the MVP, Collection Actions are unique forever by
+	external_invoice_id + action_type, even if the existing action is Resolved.
+	This matches the unique active_invoice_key field on the DocType.
+	"""
 
 	if not external_invoice_id or not action_type:
 		return False
 
-	existing = frappe.get_all(
-		ACTION_DOCTYPE,
-		filters={
-			"external_invoice_id": external_invoice_id,
-			"action_type": action_type,
-			"status": ["!=", "Resolved"],
-		},
-		fields=["name"],
-		limit_page_length=1,
+	active_invoice_key = get_active_invoice_key(external_invoice_id, action_type)
+
+	if frappe.db.exists(ACTION_DOCTYPE, {"active_invoice_key": active_invoice_key}):
+		return True
+
+	return bool(
+		frappe.db.exists(
+			ACTION_DOCTYPE,
+			{
+				"external_invoice_id": external_invoice_id,
+				"action_type": action_type,
+			},
+		)
 	)
 
-	return bool(existing)
+
+def get_active_invoice_key(external_invoice_id, action_type):
+	"""Return the unique key used to prevent duplicate Collection Actions."""
+
+	return f"{external_invoice_id}:{action_type}"
+
+
+def get_collection_action_skip_type(result):
+	"""Return a stable skip category for summary counts."""
+
+	reason = result.get("reason")
+
+	if reason == "Collection action already exists for this invoice and action type.":
+		return "existing"
+
+	return "no_action_required"
 
 
 def generate_collection_action_for_assessment(assessment_name, analysis_date=None):
@@ -106,7 +130,7 @@ def generate_collection_action_for_assessment(assessment_name, analysis_date=Non
 		return {
 			"assessment": assessment_doc.name,
 			"status": "skipped",
-			"reason": "Unresolved matching collection action already exists.",
+			"reason": "Collection action already exists for this invoice and action type.",
 		}
 
 	doc = frappe.new_doc(ACTION_DOCTYPE)
@@ -124,7 +148,10 @@ def generate_collection_action_for_assessment(assessment_name, analysis_date=Non
 			"due_date": action["due_date"],
 			"notes": action["notes"],
 			"auto_generated": 1,
-			"active_invoice_key": f"{assessment_doc.external_invoice_id}:{action['action_type']}",
+			"active_invoice_key": get_active_invoice_key(
+				assessment_doc.external_invoice_id,
+				action["action_type"],
+			),
 			"created_from_risk_score": assessment_doc.risk_score or 0,
 			"last_updated_on": now_datetime(),
 		}
@@ -149,6 +176,8 @@ def generate_collection_actions(analysis_date=None):
 		"assessments_processed": 0,
 		"actions_created": 0,
 		"actions_skipped": 0,
+		"actions_skipped_existing": 0,
+		"actions_skipped_no_action_required": 0,
 		"errors": [],
 	}
 
@@ -173,6 +202,11 @@ def generate_collection_actions(analysis_date=None):
 				summary["actions_created"] += 1
 			else:
 				summary["actions_skipped"] += 1
+				skip_type = get_collection_action_skip_type(result)
+				if skip_type == "existing":
+					summary["actions_skipped_existing"] += 1
+				else:
+					summary["actions_skipped_no_action_required"] += 1
 
 			if summary["actions_created"] and summary["actions_created"] % BATCH_SIZE == 0:
 				frappe.db.commit()
