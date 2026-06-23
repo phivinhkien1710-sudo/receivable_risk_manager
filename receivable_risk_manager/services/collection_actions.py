@@ -173,6 +173,7 @@ def generate_collection_actions(analysis_date=None):
 	analysis_date = getdate(analysis_date) if analysis_date else get_analysis_date()
 	summary = {
 		"analysis_date": str(analysis_date),
+		"closed_invoice_actions_resolved": None,
 		"assessments_processed": 0,
 		"actions_created": 0,
 		"actions_skipped": 0,
@@ -181,9 +182,14 @@ def generate_collection_actions(analysis_date=None):
 		"errors": [],
 	}
 
+	summary["closed_invoice_actions_resolved"] = resolve_actions_for_closed_invoices()
+
 	assessments = frappe.get_all(
 		ASSESSMENT_DOCTYPE,
-		filters={"risk_level": ["in", ["Medium", "High"]]},
+		filters={
+			"risk_level": ["in", ["Medium", "High"]],
+			"is_open": 1,
+		},
 		fields=["name"],
 		order_by="risk_score desc, days_overdue desc, name asc",
 	)
@@ -219,6 +225,77 @@ def generate_collection_actions(analysis_date=None):
 			summary["errors"].append(error)
 			frappe.log_error(
 				title=f"Collection Action generation failed: {assessment_name}",
+				message=error["error"],
+			)
+
+	frappe.db.commit()
+	return summary
+
+
+def resolve_actions_for_closed_invoices():
+	"""Resolve open Collection Actions whose linked assessment is now closed."""
+
+	summary = {
+		"actions_found": 0,
+		"actions_resolved": 0,
+		"errors": [],
+	}
+
+	actions = frappe.db.sql(
+		f"""
+		SELECT
+			action.name AS action_name,
+			action.notes AS notes,
+			assessment.name AS assessment_name,
+			assessment.external_invoice_id AS external_invoice_id
+		FROM `tab{ACTION_DOCTYPE}` action
+		INNER JOIN `tab{ASSESSMENT_DOCTYPE}` assessment
+			ON assessment.name = action.invoice_risk_assessment
+		WHERE action.status != 'Resolved'
+		  AND IFNULL(assessment.is_open, 0) = 0
+		ORDER BY action.name
+		""",
+		as_dict=True,
+	)
+
+	for row in actions:
+		summary["actions_found"] += 1
+
+		try:
+			closed_note = (
+				f"Auto-resolved because linked Invoice Risk Assessment {row.assessment_name} "
+				f"for invoice {row.external_invoice_id} is closed."
+			)
+			notes = row.notes or ""
+			if notes:
+				notes = f"{notes}\n\n{closed_note}"
+			else:
+				notes = closed_note
+
+			frappe.db.set_value(
+				ACTION_DOCTYPE,
+				row.action_name,
+				{
+					"status": "Resolved",
+					"notes": notes,
+					"last_updated_on": now_datetime(),
+				},
+				update_modified=True,
+			)
+			summary["actions_resolved"] += 1
+
+			if summary["actions_resolved"] % BATCH_SIZE == 0:
+				frappe.db.commit()
+
+		except Exception:
+			error = {
+				"collection_action": row.action_name,
+				"assessment": row.assessment_name,
+				"error": frappe.get_traceback(),
+			}
+			summary["errors"].append(error)
+			frappe.log_error(
+				title=f"Closed invoice action cleanup failed: {row.action_name}",
 				message=error["error"],
 			)
 

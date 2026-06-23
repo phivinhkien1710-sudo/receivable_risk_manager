@@ -63,6 +63,13 @@ def recalculate_invoice_risk_assessment(invoice_name, analysis_date=None):
 	invoice_doc = frappe.get_doc(INVOICE_DOCTYPE, invoice_name)
 
 	if not invoice_doc.is_open:
+		assessment_name = (
+			frappe.db.exists(ASSESSMENT_DOCTYPE, {"external_invoice_id": invoice_doc.invoice_id})
+			or frappe.db.exists(ASSESSMENT_DOCTYPE, {"receivables_invoice": invoice_doc.name})
+		)
+		if assessment_name:
+			_mark_assessment_as_closed(assessment_name, invoice_doc)
+
 		return {
 			"invoice": invoice_doc.name,
 			"status": "skipped",
@@ -126,6 +133,75 @@ def recalculate_invoice_risk_assessment(invoice_name, analysis_date=None):
 	}
 
 
+def mark_closed_invoice_assessments():
+	"""Mark risk assessments as closed when the linked invoice is no longer open."""
+
+	summary = {
+		"closed_assessments_found": 0,
+		"closed_assessments_updated": 0,
+		"errors": [],
+	}
+
+	closed_assessments = frappe.db.sql(
+		f"""
+		SELECT
+			assessment.name AS assessment_name,
+			invoice.name AS invoice_name
+		FROM `tab{ASSESSMENT_DOCTYPE}` assessment
+		INNER JOIN `tab{INVOICE_DOCTYPE}` invoice
+			ON invoice.name = assessment.receivables_invoice
+		WHERE IFNULL(invoice.is_open, 0) = 0
+		  AND IFNULL(assessment.is_open, 0) != 0
+		ORDER BY assessment.name
+		""",
+		as_dict=True,
+	)
+
+	for row in closed_assessments:
+		summary["closed_assessments_found"] += 1
+
+		try:
+			invoice_doc = frappe.get_doc(INVOICE_DOCTYPE, row.invoice_name)
+			_mark_assessment_as_closed(row.assessment_name, invoice_doc)
+			summary["closed_assessments_updated"] += 1
+
+			if summary["closed_assessments_updated"] % BATCH_SIZE == 0:
+				frappe.db.commit()
+
+		except Exception:
+			error = {
+				"assessment": row.assessment_name,
+				"invoice": row.invoice_name,
+				"error": frappe.get_traceback(),
+			}
+			summary["errors"].append(error)
+			frappe.log_error(
+				title=f"Closed invoice assessment cleanup failed: {row.assessment_name}",
+				message=error["error"],
+			)
+
+	frappe.db.commit()
+	return summary
+
+
+def _mark_assessment_as_closed(assessment_name, invoice_doc):
+	assessment_doc = frappe.get_doc(ASSESSMENT_DOCTYPE, assessment_name)
+	assessment_doc.update(
+		{
+			"is_open": 0,
+			"risk_score": 0,
+			"risk_level": "Low",
+			"suggested_action": "No action - invoice closed",
+			"explanation": (
+				f"Linked Receivables Invoice {invoice_doc.name} is closed. "
+				"No collection action is required."
+			),
+			"last_calculated_on": now_datetime(),
+		}
+	)
+	assessment_doc.save(ignore_permissions=True)
+
+
 def recalculate_all_invoice_risk_assessments(analysis_date=None):
 	"""Recalculate risk assessments for all open Receivables Invoice records."""
 
@@ -136,6 +212,7 @@ def recalculate_all_invoice_risk_assessments(analysis_date=None):
 		"assessments_created": 0,
 		"assessments_updated": 0,
 		"skipped": 0,
+		"closed_assessment_cleanup": None,
 		"errors": [],
 	}
 
@@ -174,4 +251,5 @@ def recalculate_all_invoice_risk_assessments(analysis_date=None):
 			)
 
 	frappe.db.commit()
+	summary["closed_assessment_cleanup"] = mark_closed_invoice_assessments()
 	return summary
