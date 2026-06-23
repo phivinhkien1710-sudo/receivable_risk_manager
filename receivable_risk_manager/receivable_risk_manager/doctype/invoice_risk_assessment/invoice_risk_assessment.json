@@ -6,10 +6,12 @@
  "engine": "InnoDB",
  "field_order": [
   "receivables_invoice",
+  "external_invoice_id",
   "receivables_customer",
   "customer_risk_score",
   "invoice_id",
   "customer_id",
+  "customer_name",
   "posting_date",
   "due_date",
   "invoice_amount",
@@ -100,6 +102,15 @@
    "unique": 1
   },
   {
+   "fieldname": "external_invoice_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "External Invoice ID",
+   "read_only": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
    "fieldname": "receivables_customer",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -111,9 +122,8 @@
   },
   {
    "fieldname": "customer_risk_score",
-   "fieldtype": "Link",
+   "fieldtype": "Int",
    "label": "Customer Risk Score",
-   "options": "Customer Risk Score",
    "read_only": 1
   },
   {
@@ -127,6 +137,12 @@
    "fieldname": "customer_id",
    "fieldtype": "Data",
    "label": "Customer ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
    "read_only": 1
   },
   {
