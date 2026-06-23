@@ -10,6 +10,14 @@
   "customer_name",
   "business_code",
   "default_currency",
+  "total_invoices",
+  "closed_invoice_count",
+  "open_invoice_count",
+  "total_invoice_amount",
+  "open_amount",
+  "average_payment_delay",
+  "late_payment_rate",
+  "last_calculated_on",
   "invoice_count",
   "first_invoice_date",
   "last_invoice_date"
@@ -41,6 +49,59 @@
    "fieldtype": "Link",
    "label": "Default Currency",
    "options": "Currency"
+  },
+  {
+   "fieldname": "total_invoices",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Invoices",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_invoice_count",
+   "fieldtype": "Int",
+   "label": "Closed Invoice Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "open_invoice_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Open Invoice Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_invoice_amount",
+   "fieldtype": "Currency",
+   "label": "Total Invoice Amount",
+   "options": "default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "open_amount",
+   "fieldtype": "Currency",
+   "label": "Open Amount",
+   "options": "default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "average_payment_delay",
+   "fieldtype": "Float",
+   "label": "Average Payment Delay",
+   "read_only": 1
+  },
+  {
+   "fieldname": "late_payment_rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Late Payment Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Last Calculated On",
+   "read_only": 1
   },
   {
    "fieldname": "invoice_count",
