@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-22 18:36:15.067411",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "receivables_invoice",
+  "receivables_customer",
+  "customer_risk_score",
+  "invoice_id",
+  "customer_id",
+  "posting_date",
+  "due_date",
+  "invoice_amount",
+  "currency",
+  "is_open",
+  "days_overdue",
+  "customer_risk_level",
+  "risk_score",
+  "risk_level",
+  "explanation",
+  "last_calculated_on",
+  "suggested_action"
+ ],
+ "fields": [
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "days_overdue",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Days Overdue",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_risk_level",
+   "fieldtype": "Select",
+   "label": "Customer Risk Level",
+   "options": "Low\nMedium\nHigh",
+   "read_only": 1
+  },
+  {
+   "fieldname": "risk_score",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Risk Score",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Risk Level",
+   "options": "Low\nMedium\nHigh",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "explanation",
+   "fieldtype": "Small Text",
+   "label": "Explanation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Last Calculated On",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "suggested_action",
+   "fieldtype": "Small Text",
+   "label": "Suggested Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receivables_invoice",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receivables Invoice",
+   "options": "Receivables Invoice",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "receivables_customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receivables Customer",
+   "options": "Receivables Customer",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_risk_score",
+   "fieldtype": "Link",
+   "label": "Customer Risk Score",
+   "options": "Customer Risk Score",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Invoice ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "Customer ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "invoice_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Invoice Amount",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-23 14:27:55.438015",
+ "modified_by": "Administrator",
+ "module": "receivable_risk_manager",
+ "name": "Invoice Risk Assessment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

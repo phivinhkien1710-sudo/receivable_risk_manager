@@ -1,0 +1,248 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:invoice_id",
+ "creation": "2026-06-23 13:04:43.681562",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_id",
+  "document_id",
+  "receivables_customer",
+  "customer_id",
+  "customer_name",
+  "business_code",
+  "business_year",
+  "posting_date",
+  "due_date",
+  "clear_date",
+  "document_created_date",
+  "document_created_date_1",
+  "baseline_create_date",
+  "currency",
+  "document_type",
+  "posting_id",
+  "payment_terms",
+  "invoice_amount",
+  "is_open",
+  "late_payment_status",
+  "payment_delay_days",
+  "days_overdue",
+  "status",
+  "imported_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Invoice ID",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "document_id",
+   "fieldtype": "Data",
+   "label": "Document ID"
+  },
+  {
+   "fieldname": "receivables_customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receivables Customer",
+   "options": "Receivables Customer",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer ID",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "business_code",
+   "fieldtype": "Data",
+   "label": "Business Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "business_year",
+   "fieldtype": "Int",
+   "label": "Business Year"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "clear_date",
+   "fieldtype": "Date",
+   "label": "Clear Date"
+  },
+  {
+   "fieldname": "document_created_date",
+   "fieldtype": "Date",
+   "label": "Document Created Date"
+  },
+  {
+   "fieldname": "document_created_date_1",
+   "fieldtype": "Date",
+   "label": "Document Created Date 1 "
+  },
+  {
+   "fieldname": "baseline_create_date",
+   "fieldtype": "Date",
+   "label": "Baseline Create Date"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Data",
+   "label": "Document Type"
+  },
+  {
+   "fieldname": "posting_id",
+   "fieldtype": "Int",
+   "label": "Posting ID"
+  },
+  {
+   "fieldname": "payment_terms",
+   "fieldtype": "Data",
+   "label": "Payment Terms"
+  },
+  {
+   "fieldname": "invoice_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Invoice Amount",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Open",
+   "search_index": 1
+  },
+  {
+   "fieldname": "late_payment_status",
+   "fieldtype": "Select",
+   "label": "Late Payment Status",
+   "options": "Unknown\nLate\nOntime"
+  },
+  {
+   "fieldname": "payment_delay_days",
+   "fieldtype": "Int",
+   "label": "Payment Delay Days"
+  },
+  {
+   "fieldname": "days_overdue",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Days Overdue",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nClosed\nOverdue",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "imported_on",
+   "fieldtype": "Datetime",
+   "label": "Imported On",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-23 14:00:36.045973",
+ "modified_by": "Administrator",
+ "module": "receivable_risk_manager",
+ "name": "Receivables Invoice",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

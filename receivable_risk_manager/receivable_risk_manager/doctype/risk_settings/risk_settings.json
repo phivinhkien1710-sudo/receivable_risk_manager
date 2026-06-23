@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-22 17:59:20.230657",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "high_risk_threshold",
+  "medium_risk_threshold",
+  "overdue_weight",
+  "late_payment_weight",
+  "high_outstanding_weight",
+  "multiple_unpaid_weight",
+  "unusually_large_invoice_weight"
+ ],
+ "fields": [
+  {
+   "default": "70",
+   "fieldname": "high_risk_threshold",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "High Risk Threshold",
+   "reqd": 1
+  },
+  {
+   "default": "40",
+   "fieldname": "medium_risk_threshold",
+   "fieldtype": "Int",
+   "label": "Medium Risk Threshold",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "fieldname": "overdue_weight",
+   "fieldtype": "Int",
+   "label": "Overdue Weight",
+   "reqd": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "late_payment_weight",
+   "fieldtype": "Int",
+   "label": "Late Payment Weight",
+   "reqd": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "high_outstanding_weight",
+   "fieldtype": "Int",
+   "label": "High Outstanding Weight",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "multiple_unpaid_weight",
+   "fieldtype": "Int",
+   "label": "Multiple Unpaid Weight",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "unusually_large_invoice_weight",
+   "fieldtype": "Int",
+   "label": "Unusually Large Invoice Weight",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-06-22 18:08:02.481031",
+ "modified_by": "Administrator",
+ "module": "receivable_risk_manager",
+ "name": "Risk Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
