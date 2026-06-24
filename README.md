@@ -52,23 +52,23 @@ The screenshots below show the main dataset and reporting views in Frappe Desk.
 
 ### Imported Receivables Invoice Data
 
-![Receivables Invoice List](docs/screenshots/receivables-invoice-list.png)
+![Receivables Invoice List](screenshots/receivables-invoice-list.png)
 
 ### Aggregated Receivables Customers
 
-![Receivables Customer List](docs/screenshots/receivables-customer-list.png)
+![Receivables Customer List](screenshots/receivables-customer-list.png)
 
 ### Customer Risk Overview Report
 
-![Customer Risk Overview](docs/screenshots/customer-risk-overview.png)
+![Customer Risk Overview](screenshots/customer-risk-overview.png)
 
 ### Invoice Collection Priority Report
 
-![Invoice Collection Priority](docs/screenshots/invoice-collection-priority.png)
+![Invoice Collection Priority](screenshots/invoice-collection-priority.png)
 
 ### Collection Action Queue Report
 
-![Collection Action Queue](docs/screenshots/collection-action-queue.png)
+![Collection Action Queue](screenshots/collection-action-queue.png)
 
 ## Built With
 
