@@ -62,6 +62,14 @@ The screenshots below show the main dataset and reporting views in Frappe Desk.
 
 ![Customer Risk Overview](docs/screenshots/customer-risk-overview.png)
 
+### Invoice Collection Priority Report
+
+![Invoice Collection Priority](docs/screenshots/invoice-collection-priority.png)
+
+### Collection Action Queue Report
+
+![Collection Action Queue](docs/screenshots/collection-action-queue.png)
+
 ## Built With
 
 - [Frappe Framework v15](https://frappeframework.com/)
@@ -274,24 +282,111 @@ bench --site staging.local execute receivable_risk_manager.services.data_quality
 
 The check summarizes missing IDs, missing dates, open/closed invoice counts, invalid flags, negative amounts, and inconsistent clear-date/open-status cases.
 
-## Demo Flow
+## Demo Workflow and Commands
 
-A simple walkthrough for a portfolio demo:
+This is the workflow I use for a local portfolio demo on a Frappe site named `staging.local`.
+
+### 1. Start the bench
+
+In one terminal:
+
+```bash
+cd /path/to/frappe-bench
+bench start
+```
+
+Then open the site in the browser and log in:
+
+```text
+http://staging.local:8000
+```
+
+If your local site uses a different port or hostname, use that instead.
+
+### 2. Import the cleaned dataset
+
+In a second terminal:
+
+```bash
+cd /path/to/frappe-bench
+bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
+  --kwargs "{'csv_path': 'apps/receivable_risk_manager/ml/data/dataset_clean.csv'}"
+```
+
+For a faster demo reset or smoke test, import a smaller slice:
+
+```bash
+bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
+  --kwargs "{'csv_path': 'apps/receivable_risk_manager/ml/data/dataset_clean.csv', 'limit': 1000}"
+```
+
+What this demonstrates:
+
+- raw CSV invoice rows become `Receivables Invoice` records;
+- the app avoids forcing analytical data into ERPNext accounting documents.
+
+### 3. Run the full recalculation pipeline
+
+```bash
+bench --site staging.local execute receivable_risk_manager.tasks.run_full_recalculation
+```
+
+What this demonstrates:
+
+- invoices are aggregated into `Receivables Customer`;
+- customer risk is scored;
+- open invoices are assessed;
+- collection actions are generated;
+- the pipeline can be safely rerun.
+
+### 4. Run the data quality check
+
+```bash
+bench --site staging.local execute receivable_risk_manager.services.data_quality.validate_receivables_data_quality
+```
+
+What this demonstrates:
+
+- the project checks data assumptions before trusting the analytics;
+- the check is read-only and safe to run repeatedly.
+
+### 5. Verify the scheduled job hook
+
+```bash
+bench --site staging.local execute frappe.get_hooks --args "['scheduler_events']"
+```
+
+You can also manually run the scheduled function:
+
+```bash
+bench --site staging.local execute receivable_risk_manager.tasks.daily_recalculate_receivables_risk
+```
+
+What this demonstrates:
+
+- the same recalculation pipeline is registered for daily scheduled execution;
+- new or changed invoice data can be picked up by the next scheduled run.
+
+### 6. Walk through the Frappe Desk UI
+
+A concise demo path:
 
 1. Import `dataset_clean.csv`.
 2. Run `run_full_recalculation`.
-3. Open `Customer Risk Overview`.
+3. Open the `Receivables Invoice` list.
+   - Show the normalized invoice dataset imported into Frappe.
+4. Open the `Receivables Customer` list.
+   - Show customer-level aggregates such as total invoices and open exposure.
+5. Open `Customer Risk Overview`.
    - Show high-risk customers.
    - Explain `risk_score`, `risk_level`, and `risk_confidence`.
-4. Open `Invoice Collection Priority`.
+6. Open `Invoice Collection Priority`.
    - Show Medium/High-risk open invoices.
    - Explain overdue days, customer risk contribution, invoice exposure, and suggested action.
-5. Open `Collection Action Queue`.
+7. Open `Collection Action Queue`.
    - Show generated follow-up actions sorted by due date and risk score.
-6. Run the data quality check.
-   - Show that the input data is validated before analytics are trusted.
-7. Show the scheduled task hook.
-   - Explain how the recalculation pipeline can run daily.
+8. Show the terminal output from the data quality check and scheduler hook.
+   - Explain how the workflow becomes repeatable instead of being a one-time script.
 
 ## Reports
 
