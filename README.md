@@ -1,12 +1,5 @@
 # Receivables Risk Manager
 
-<!--
-Suggested screenshots to add later:
-- docs/screenshots/customer-risk-overview.png
-- docs/screenshots/open-invoice-risk-list.png
-- docs/screenshots/collection-action-queue.png
--->
-
 A Frappe/ERPNext app that helps SMEs identify risky customers, prioritize overdue invoices, and generate collection actions using rule-based receivables risk scoring.
 
 Built as a SWE portfolio project for a potential NUS FinTech Lab software engineering role.
@@ -55,19 +48,19 @@ This is not a production credit-risk system. It is an MVP-style engineering proj
 
 ## Screenshots
 
-> Screenshots are placeholders for now. Add images after capturing the reports from the Frappe Desk UI.
+The screenshots below show the main dataset and reporting views in Frappe Desk.
 
-### Customer Risk Overview
+### Imported Receivables Invoice Data
+
+![Receivables Invoice List](docs/screenshots/receivables-invoice-list.png)
+
+### Aggregated Receivables Customers
+
+![Receivables Customer List](docs/screenshots/receivables-customer-list.png)
+
+### Customer Risk Overview Report
 
 ![Customer Risk Overview](docs/screenshots/customer-risk-overview.png)
-
-### Open Invoice Risk List
-
-![Open Invoice Risk List](docs/screenshots/open-invoice-risk-list.png)
-
-### Collection Action Queue
-
-![Collection Action Queue](docs/screenshots/collection-action-queue.png)
 
 ## Built With
 
@@ -90,7 +83,7 @@ flowchart TD
     D --> E[Invoice Risk Assessment]
     E --> F[Collection Action]
     D --> G[Customer Risk Overview Report]
-    E --> H[Open Invoice Risk List Report]
+    E --> H[Invoice Collection Priority Report]
     F --> I[Collection Action Queue Report]
     J[Daily Scheduled Recalculation] --> C
     J --> D
@@ -134,7 +127,7 @@ dataset_clean.csv
 - Stale-record handling when invoices close.
 - Script Reports:
   - `Customer Risk Overview`
-  - `Open Invoice Risk List`
+  - `Invoice Collection Priority`
   - `Collection Action Queue`
 - Daily scheduled recalculation pipeline.
 - Read-only data quality check.
@@ -290,7 +283,7 @@ A simple walkthrough for a portfolio demo:
 3. Open `Customer Risk Overview`.
    - Show high-risk customers.
    - Explain `risk_score`, `risk_level`, and `risk_confidence`.
-4. Open `Open Invoice Risk List`.
+4. Open `Invoice Collection Priority`.
    - Show Medium/High-risk open invoices.
    - Explain overdue days, customer risk contribution, invoice exposure, and suggested action.
 5. Open `Collection Action Queue`.
@@ -318,7 +311,7 @@ Shows customer-level risk and exposure:
 - risk confidence;
 - explanation.
 
-### Open Invoice Risk List
+### Invoice Collection Priority
 
 Source DocType: `Invoice Risk Assessment`
 
@@ -400,7 +393,7 @@ receivable_risk_manager/
 
       report/
         customer_risk_overview/
-        open_invoice_risk_list/
+        invoice_collection_priority/
         collection_action_queue/
 ```
 

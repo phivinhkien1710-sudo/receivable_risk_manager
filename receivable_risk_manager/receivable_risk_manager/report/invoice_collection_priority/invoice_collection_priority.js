@@ -1,4 +1,4 @@
-frappe.query_reports["Open Invoice Risk List"] = {
+frappe.query_reports["Invoice Collection Priority"] = {
 	filters: [
 		{
 			fieldname: "risk_level",

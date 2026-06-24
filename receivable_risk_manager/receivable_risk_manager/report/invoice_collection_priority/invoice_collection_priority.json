@@ -12,11 +12,11 @@
  "modified": "2026-06-23 16:45:00.000000",
  "modified_by": "Administrator",
  "module": "receivable_risk_manager",
- "name": "Open Invoice Risk List",
+ "name": "Invoice Collection Priority",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Invoice Risk Assessment",
- "report_name": "Open Invoice Risk List",
+ "report_name": "Invoice Collection Priority",
  "report_type": "Script Report",
  "roles": [
   {
