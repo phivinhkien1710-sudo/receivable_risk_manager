@@ -16,6 +16,15 @@ class TestRiskLevel(unittest.TestCase):
 		self.assertEqual(get_risk_level(70), "High")
 		self.assertEqual(get_risk_level(100), "High")
 
+	def test_get_risk_level_uses_custom_thresholds(self):
+		settings = {
+			"medium_risk_threshold": 30,
+			"high_risk_threshold": 60,
+		}
+
+		self.assertEqual(get_risk_level(30, settings=settings), "Medium")
+		self.assertEqual(get_risk_level(60, settings=settings), "High")
+
 
 class TestCustomerRiskScoring(unittest.TestCase):
 	def test_low_risk_customer(self):
@@ -106,6 +115,25 @@ class TestCustomerRiskScoring(unittest.TestCase):
 		result = calculate_customer_risk({})
 
 		self.assertTrue(result["risk_explanation"])
+
+	def test_customer_risk_uses_custom_weights(self):
+		result = calculate_customer_risk(
+			{
+				"total_invoices": 10,
+				"closed_invoice_count": 10,
+				"open_invoice_count": 0,
+				"total_invoice_amount": 10000,
+				"open_amount": 0,
+				"average_payment_delay": 1,
+				"late_payment_rate": 60,
+			},
+			settings={
+				"customer_late_payment_high_weight": 40,
+			},
+		)
+
+		self.assertEqual(result["risk_score"], 40)
+		self.assertEqual(result["risk_level"], "Medium")
 
 
 class TestInvoiceRiskScoring(unittest.TestCase):
@@ -198,6 +226,23 @@ class TestInvoiceRiskScoring(unittest.TestCase):
 		)
 
 		self.assertLessEqual(result["risk_score"], 100)
+
+	def test_invoice_risk_uses_custom_thresholds_and_weights(self):
+		result = calculate_invoice_risk(
+			{
+				"days_overdue": 11,
+				"invoice_amount": 100,
+				"average_invoice_amount": 100,
+				"customer_risk_level": "Low",
+			},
+			settings={
+				"invoice_overdue_low_days": 10,
+				"invoice_overdue_low_weight": 40,
+			},
+		)
+
+		self.assertEqual(result["risk_score"], 40)
+		self.assertEqual(result["risk_level"], "Medium")
 
 
 if __name__ == "__main__":

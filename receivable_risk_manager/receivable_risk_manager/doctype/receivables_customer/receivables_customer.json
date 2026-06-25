@@ -19,6 +19,7 @@
   "late_payment_rate",
   "risk_score",
   "risk_level",
+  "risk_confidence",
   "risk_explanation",
   "risk_last_calculated_on",
   "last_calculated_on",
@@ -117,6 +118,14 @@
    "options": "Low\nMedium\nHigh",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "risk_confidence",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Risk Confidence",
+   "options": "Low\nMedium\nHigh",
+   "read_only": 1
   },
   {
    "fieldname": "risk_explanation",

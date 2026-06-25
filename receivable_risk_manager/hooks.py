@@ -1,7 +1,7 @@
 app_name = "receivable_risk_manager"
-app_title = "receivable_risk_manager"
-app_publisher = "kien"
-app_description = "new project"
+app_title = "Receivables Risk Manager"
+app_publisher = "Kien Phi"
+app_description = "Rule-based receivables risk scoring and collection prioritization for Frappe/ERPNext."
 app_email = "phivinhkien1710@gmail.com"
 app_license = "mit"
 

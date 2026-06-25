@@ -1,7 +1,9 @@
 import frappe
 from frappe.utils import getdate, now_datetime
 
+from receivable_risk_manager.services.risk_audit import log_risk_change
 from receivable_risk_manager.services.risk_scoring import calculate_invoice_risk
+from receivable_risk_manager.services.risk_settings import get_scoring_settings
 
 
 INVOICE_DOCTYPE = "Receivables Invoice"
@@ -85,7 +87,8 @@ def recalculate_invoice_risk_assessment(invoice_name, analysis_date=None):
 
 	customer_doc = frappe.get_doc(CUSTOMER_DOCTYPE, customer_name)
 	metrics = build_invoice_metrics(invoice_doc, customer_doc, analysis_date)
-	risk = calculate_invoice_risk(metrics)
+	settings = get_scoring_settings()
+	risk = calculate_invoice_risk(metrics, settings=settings)
 
 	assessment_name = (
 		frappe.db.exists(ASSESSMENT_DOCTYPE, {"external_invoice_id": invoice_doc.invoice_id})
@@ -98,6 +101,9 @@ def recalculate_invoice_risk_assessment(invoice_name, analysis_date=None):
 	else:
 		assessment_doc = frappe.new_doc(ASSESSMENT_DOCTYPE)
 		created = True
+
+	previous_score = assessment_doc.risk_score
+	previous_level = assessment_doc.risk_level
 
 	assessment_doc.update(
 		{
@@ -123,6 +129,20 @@ def recalculate_invoice_risk_assessment(invoice_name, analysis_date=None):
 		}
 	)
 	assessment_doc.save(ignore_permissions=True)
+
+	log_risk_change(
+		reference_doctype=ASSESSMENT_DOCTYPE,
+		reference_name=assessment_doc.name,
+		entity_type="Invoice",
+		previous_score=previous_score,
+		new_score=assessment_doc.risk_score,
+		previous_level=previous_level,
+		new_level=assessment_doc.risk_level,
+		reason=assessment_doc.explanation,
+		source="Invoice Risk",
+		customer_id=assessment_doc.customer_id,
+		external_invoice_id=assessment_doc.external_invoice_id,
+	)
 
 	return {
 		"invoice": invoice_doc.name,
@@ -186,6 +206,8 @@ def mark_closed_invoice_assessments():
 
 def _mark_assessment_as_closed(assessment_name, invoice_doc):
 	assessment_doc = frappe.get_doc(ASSESSMENT_DOCTYPE, assessment_name)
+	previous_score = assessment_doc.risk_score
+	previous_level = assessment_doc.risk_level
 	assessment_doc.update(
 		{
 			"is_open": 0,
@@ -200,6 +222,19 @@ def _mark_assessment_as_closed(assessment_name, invoice_doc):
 		}
 	)
 	assessment_doc.save(ignore_permissions=True)
+	log_risk_change(
+		reference_doctype=ASSESSMENT_DOCTYPE,
+		reference_name=assessment_doc.name,
+		entity_type="Invoice",
+		previous_score=previous_score,
+		new_score=assessment_doc.risk_score,
+		previous_level=previous_level,
+		new_level=assessment_doc.risk_level,
+		reason=assessment_doc.explanation,
+		source="Invoice Risk",
+		customer_id=assessment_doc.customer_id,
+		external_invoice_id=assessment_doc.external_invoice_id,
+	)
 
 
 def recalculate_all_invoice_risk_assessments(analysis_date=None):

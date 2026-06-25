@@ -35,6 +35,12 @@ def get_columns():
 			"width": 100,
 		},
 		{
+			"label": "Risk Confidence",
+			"fieldname": "risk_confidence",
+			"fieldtype": "Data",
+			"width": 130,
+		},
+		{
 			"label": "Open Amount",
 			"fieldname": "open_amount",
 			"fieldtype": "Currency",
@@ -104,6 +110,7 @@ def get_data(filters):
 			"late_payment_rate",
 			"risk_score",
 			"risk_level",
+			"risk_confidence",
 			"risk_explanation",
 		],
 		order_by="risk_score desc, open_amount desc",

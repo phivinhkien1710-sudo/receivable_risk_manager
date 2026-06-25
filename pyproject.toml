@@ -1,9 +1,9 @@
 [project]
 name = "receivable_risk_manager"
 authors = [
-    { name = "kien", email = "phivinhkien1710@gmail.com"}
+    { name = "Kien Phi", email = "phivinhkien1710@gmail.com"}
 ]
-description = "new project"
+description = "Rule-based receivables risk scoring and collection prioritization for Frappe/ERPNext."
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]

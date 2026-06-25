@@ -105,9 +105,10 @@ flowchart TD
 | --- | --- |
 | `Receivables Invoice` | Stores normalized invoice rows from the cleaned CSV dataset. |
 | `Receivables Customer` | Stores customer aggregates, risk score, risk level, and risk confidence. |
-| `Risk Settings` | Stores scoring thresholds/weights for future configuration. |
+| `Risk Settings` | Stores configurable scoring thresholds and coarse risk weights. |
 | `Invoice Risk Assessment` | Stores calculated risk for open invoices. |
 | `Collection Action` | Stores generated follow-up actions for collection work. |
+| `Risk Audit Log` | Stores score/level changes for customer and invoice risk recalculations. |
 
 ### Core Pipeline
 
@@ -128,11 +129,14 @@ dataset_clean.csv
 - Custom normalized DocTypes for analytical invoice-payment data.
 - Customer aggregation by `customer_id`.
 - Rule-based customer risk scoring.
+- Configurable risk thresholds and weights through `Risk Settings`.
 - Risk confidence for limited payment history.
 - Open invoice risk assessment.
 - Collection action generation.
-- Duplicate-safe collection action creation.
+- Duplicate-safe active collection action creation.
 - Stale-record handling when invoices close.
+- Basic risk audit log for score and level changes.
+- Lightweight DocType validations for core data integrity.
 - Script Reports:
   - `Customer Risk Overview`
   - `Invoice Collection Priority`
@@ -140,6 +144,7 @@ dataset_clean.csv
 - Daily scheduled recalculation pipeline.
 - Read-only data quality check.
 - Unit tests for pure scoring functions.
+- Frappe integration tests for the core risk workflow.
 
 ## Design Decisions
 
@@ -447,9 +452,16 @@ python3 -m unittest receivable_risk_manager.tests.test_risk_scoring
 Expected output:
 
 ```text
-Ran 13 tests
+Ran 16 tests
 
 OK
+```
+
+The Frappe workflow tests require a migrated Frappe site:
+
+```bash
+cd /path/to/frappe-bench
+bench --site staging.local run-tests --app receivable_risk_manager
 ```
 
 ## Project Structure
@@ -468,15 +480,18 @@ receivable_risk_manager/
       invoice_imports.py
 
     services/
+      risk_settings.py
       customer_aggregation.py
       customer_risk.py
       invoice_risk.py
       collection_actions.py
       risk_scoring.py
+      risk_audit.py
       data_quality.py
 
     tests/
       test_risk_scoring.py
+      test_receivables_workflow.py
 
     receivable_risk_manager/
       doctype/
@@ -485,6 +500,7 @@ receivable_risk_manager/
         risk_settings/
         invoice_risk_assessment/
         collection_action/
+        risk_audit_log/
 
       report/
         customer_risk_overview/
@@ -503,7 +519,9 @@ receivable_risk_manager/
 - [x] Add scheduled recalculation.
 - [x] Add data quality checks.
 - [x] Add unit tests for scoring.
-- [ ] Make scoring weights fully configurable through `Risk Settings`.
+- [x] Make scoring thresholds and coarse weights configurable through `Risk Settings`.
+- [x] Add basic risk audit logging.
+- [x] Add Frappe workflow integration test coverage.
 - [ ] Add dashboard charts for risk distribution and open exposure.
 - [ ] Add a Desk UI flow for CSV upload/import.
 - [ ] Add background job support for large imports.

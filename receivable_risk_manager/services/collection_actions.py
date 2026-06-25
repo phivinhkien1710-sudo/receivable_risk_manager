@@ -71,18 +71,13 @@ def get_action_from_assessment(assessment_doc, analysis_date):
 def collection_action_exists(external_invoice_id, action_type):
 	"""Return True if a matching Collection Action already exists.
 
-	For the MVP, Collection Actions are unique forever by
-	external_invoice_id + action_type, even if the existing action is Resolved.
-	This matches the unique active_invoice_key field on the DocType.
+	Only active/unresolved Collection Actions block duplicates. Resolved actions
+	represent completed work and should not prevent a future action for the same
+	invoice/action type.
 	"""
 
 	if not external_invoice_id or not action_type:
 		return False
-
-	active_invoice_key = get_active_invoice_key(external_invoice_id, action_type)
-
-	if frappe.db.exists(ACTION_DOCTYPE, {"active_invoice_key": active_invoice_key}):
-		return True
 
 	return bool(
 		frappe.db.exists(
@@ -90,13 +85,14 @@ def collection_action_exists(external_invoice_id, action_type):
 			{
 				"external_invoice_id": external_invoice_id,
 				"action_type": action_type,
+				"status": ["!=", "Resolved"],
 			},
 		)
 	)
 
 
 def get_active_invoice_key(external_invoice_id, action_type):
-	"""Return the unique key used to prevent duplicate Collection Actions."""
+	"""Return the stable key used to identify an active invoice/action pair."""
 
 	return f"{external_invoice_id}:{action_type}"
 
@@ -277,6 +273,7 @@ def resolve_actions_for_closed_invoices():
 				row.action_name,
 				{
 					"status": "Resolved",
+					"active_invoice_key": None,
 					"notes": notes,
 					"last_updated_on": now_datetime(),
 				},
