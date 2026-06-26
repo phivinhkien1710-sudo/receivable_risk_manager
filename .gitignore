@@ -7,3 +7,5 @@ node_modules
 __pycache__
 ml/data/*
 !ml/data/.gitkeep
+ml/artifacts/*
+!ml/artifacts/.gitkeep

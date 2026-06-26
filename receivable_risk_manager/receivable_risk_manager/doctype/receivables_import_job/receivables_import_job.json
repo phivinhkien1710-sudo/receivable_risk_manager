@@ -1,0 +1,227 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "RIMJ-.#####",
+ "creation": "2026-06-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "csv_file",
+  "as_of_date",
+  "imported_by",
+  "started_on",
+  "completed_on",
+  "recalculation_status",
+  "row_counts_section",
+  "total_rows",
+  "valid_rows",
+  "invalid_rows",
+  "imported_rows",
+  "result_counts_section",
+  "customers_created",
+  "customers_updated",
+  "invoices_created",
+  "invoices_updated",
+  "customers_summarized",
+  "summaries_section",
+  "validation_summary",
+  "error_summary"
+ ],
+ "fields": [
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nValidated\nValidation Failed\nImporting\nCompleted\nCompleted With Errors\nFailed",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "csv_file",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "CSV File",
+   "reqd": 1
+  },
+  {
+   "default": "2020-05-31",
+   "fieldname": "as_of_date",
+   "fieldtype": "Date",
+   "label": "As Of Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "imported_by",
+   "fieldtype": "Link",
+   "label": "Imported By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "default": "Not Started",
+   "fieldname": "recalculation_status",
+   "fieldtype": "Select",
+   "label": "Recalculation Status",
+   "options": "Not Started\nCompleted\nCompleted With Errors\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "row_counts_section",
+   "fieldtype": "Section Break",
+   "label": "Row Counts"
+  },
+  {
+   "fieldname": "total_rows",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valid_rows",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Valid Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invalid_rows",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Invalid Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imported_rows",
+   "fieldtype": "Int",
+   "label": "Imported Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_counts_section",
+   "fieldtype": "Section Break",
+   "label": "Import Result Counts"
+  },
+  {
+   "fieldname": "customers_created",
+   "fieldtype": "Int",
+   "label": "Customers Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customers_updated",
+   "fieldtype": "Int",
+   "label": "Customers Updated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoices_created",
+   "fieldtype": "Int",
+   "label": "Invoices Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoices_updated",
+   "fieldtype": "Int",
+   "label": "Invoices Updated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customers_summarized",
+   "fieldtype": "Int",
+   "label": "Customers Summarized",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summaries_section",
+   "fieldtype": "Section Break",
+   "label": "Summaries"
+  },
+  {
+   "fieldname": "validation_summary",
+   "fieldtype": "Small Text",
+   "label": "Validation Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_summary",
+   "fieldtype": "Small Text",
+   "label": "Error Summary",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "receivable_risk_manager",
+ "name": "Receivables Import Job",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
