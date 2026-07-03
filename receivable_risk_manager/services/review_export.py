@@ -23,11 +23,16 @@ CUSTOMER_EXPORT_FIELDS = [
 	"risk_last_calculated_on",
 ]
 
+DEFAULT_CUSTOMER_EXPORT_PATH = (
+	Path(__file__).resolve().parents[2] / "local_data" / "receivables_customers_first_50.csv"
+)
+
 
 def export_first_receivables_customers(
 	limit: int = 50,
-	output_path: str = "/Users/phikien/erpnext/frappe-bench/apps/receivable_risk_manager/ml/data/receivables_customers_first_50.csv",
+	output_path: str | None = None,
 ):
+	output_path = output_path or str(DEFAULT_CUSTOMER_EXPORT_PATH)
 	rows = frappe.get_all(
 		"Receivables Customer",
 		fields=CUSTOMER_EXPORT_FIELDS,

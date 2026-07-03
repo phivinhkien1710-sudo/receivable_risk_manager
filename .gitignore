@@ -1,11 +1,21 @@
+# OS / editor noise
 .DS_Store
-*.pyc
-*.egg-info
 *.swp
 tags
-node_modules
-__pycache__
-ml/data/*
-!ml/data/.gitkeep
-ml/artifacts/*
-!ml/artifacts/.gitkeep
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# JavaScript dependencies / generated assets
+node_modules/
+
+# Local datasets and scratch outputs.
+# Keep the folder placeholder, but never commit working CSV/DB files.
+local_data/*
+!local_data/.gitkeep
+
+# Removed experimental ML workspace; keep any future ML artifacts local unless
+# they are intentionally reintroduced as part of the product roadmap.
+ml/

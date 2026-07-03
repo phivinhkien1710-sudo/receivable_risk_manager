@@ -1,6 +1,6 @@
--- Clean Kaggle invoice-payment dataset for receivables risk experiments.
+-- Clean Kaggle invoice-payment dataset for receivables risk demo imports.
 --
--- This script intentionally writes only to a local SQLite database under ml/data/.
+-- This script intentionally writes only to a local SQLite database under local_data/.
 -- It does not touch the ERPNext/Frappe site database.
 
 .bail on
@@ -112,7 +112,7 @@ FROM invoice_raw;
 
 DROP TABLE IF EXISTS invoice_review;
 
--- Step 3: Mark rows that should be rejected before modeling.
+-- Step 3: Mark rows that should be rejected before import.
 -- This keeps data-quality decisions visible instead of silently deleting rows.
 CREATE TABLE invoice_review AS
 SELECT
@@ -133,9 +133,9 @@ FROM invoice_normalized;
 
 DROP TABLE IF EXISTS invoice_clean;
 
--- Step 4: Keep only valid rows and add target variables.
--- payment_delay_days and is_late are for training/evaluation only;
--- do not use them as model inputs because they depend on clear_date.
+-- Step 4: Keep only valid rows and add review fields.
+-- payment_delay_days and is_late depend on clear_date, so they are useful
+-- for historical analysis but not for scoring open invoices.
 CREATE TABLE invoice_clean AS
 SELECT
     business_code,
@@ -183,7 +183,7 @@ DROP VIEW IF EXISTS open_invoices;
 DROP VIEW IF EXISTS invoice_risk_training_view;
 
 -- Step 6: Create useful views.
--- labeled_invoices are safe for supervised model training because clear_date exists.
+-- labeled_invoices are historical paid invoices because clear_date exists.
 CREATE VIEW labeled_invoices AS
 SELECT *
 FROM invoice_clean
@@ -198,7 +198,7 @@ FROM invoice_clean
 WHERE is_open = 1
   AND clear_date IS NULL;
 
--- Compact view that is closer to the future risk-scoring shape.
+-- Compact view that is closer to the risk-scoring import shape.
 CREATE VIEW invoice_risk_training_view AS
 SELECT
     customer_id,
@@ -255,7 +255,7 @@ FROM labeled_invoices;
 -- Step 8: Export the cleaned dataset as CSV.
 .headers on
 .mode csv
-.once "ml/data/dataset_clean.csv"
+.once "local_data/dataset_clean.csv"
 SELECT *
 FROM invoice_clean
 ORDER BY posting_date, invoice_id;
