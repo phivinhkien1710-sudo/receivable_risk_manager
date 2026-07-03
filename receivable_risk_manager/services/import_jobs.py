@@ -38,6 +38,10 @@ REQUIRED_COLUMNS = [
 
 MAX_ERROR_MESSAGES = 20
 
+QUEUEABLE_STATUSES = ("Validated", "Completed With Errors")
+
+IMPORT_JOB_UPDATE_EVENT = "receivables_import_job_update"
+
 
 def validate_import_file(job_name):
 	"""Validate an attached CSV file without importing rows."""
@@ -50,6 +54,48 @@ def validate_import_file(job_name):
 	update_job_with_validation_result(job, result)
 
 	return result
+
+
+def queue_import_job(job_name):
+	"""Queue a validated Receivables Import Job for background import.
+
+	Large CSV files can take longer than a web worker's request timeout to
+	import and recalculate, so the actual work runs on the `long` background
+	queue instead of inside the request that triggered it. The Desk UI is
+	notified of completion via a realtime event instead of waiting on the
+	HTTP response.
+	"""
+
+	frappe = get_frappe()
+	job = frappe.get_doc("Receivables Import Job", job_name)
+
+	if job.status not in QUEUEABLE_STATUSES:
+		frappe.throw(
+			f"Only a validated import job can be queued for import (current status: {job.status})."
+		)
+
+	job.status = "Queued"
+	job.save(ignore_permissions=True)
+	frappe.db.commit()
+
+	frappe.enqueue(
+		run_background_import,
+		queue="long",
+		timeout=6000,
+		job_id=f"receivables-import-job-{job.name}",
+		deduplicate=True,
+		receivables_import_job_name=job.name,
+	)
+
+	return {"status": job.status, "queued": True}
+
+
+def run_background_import(receivables_import_job_name):
+	"""Background-queue entrypoint. Kept separate from `run_import_job` so its
+	only parameter name doesn't collide with `frappe.enqueue`'s own reserved
+	`job_name` keyword argument."""
+
+	run_import_job(receivables_import_job_name)
 
 
 def run_import_job(job_name):
@@ -84,6 +130,7 @@ def run_import_job(job_name):
 
 		recalculation_result = run_recalculation()
 		update_job_with_import_result(job, import_result, recalculation_result, validation)
+		notify_import_job_update(job)
 		return {
 			"validation": summarize_validation_result(validation),
 			"import": import_result,
@@ -101,7 +148,21 @@ def run_import_job(job_name):
 			message=frappe.get_traceback(),
 		)
 		frappe.db.commit()
+		notify_import_job_update(job)
 		raise
+
+
+def notify_import_job_update(job):
+	"""Tell any open Desk form for this job to refresh, since the import can
+	run on a background worker well after the request that queued it returns."""
+
+	frappe = get_frappe()
+	frappe.publish_realtime(
+		IMPORT_JOB_UPDATE_EVENT,
+		{"job_name": job.name, "status": job.status},
+		doctype="Receivables Import Job",
+		docname=job.name,
+	)
 
 
 def validate_csv_file(file_path):

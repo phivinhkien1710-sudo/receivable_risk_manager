@@ -22,6 +22,6 @@ def validate_import_file(job_name):
 
 @frappe.whitelist()
 def run_import_job(job_name):
-	from receivable_risk_manager.services.import_jobs import run_import_job as run_job
+	from receivable_risk_manager.services.import_jobs import queue_import_job
 
-	return run_job(job_name)
+	return queue_import_job(job_name)

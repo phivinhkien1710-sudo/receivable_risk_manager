@@ -144,6 +144,7 @@ dataset_clean.csv
 
 - CSV import of a public receivables invoice dataset.
 - Desk-based CSV import job with Validate and Import actions.
+- Background-queued import and recalculation for large CSV files, with a realtime Desk notification when the job finishes.
 - Custom normalized DocTypes for analytical invoice-payment data.
 - Customer aggregation by `customer_id`.
 - Rule-based customer risk scoring.
@@ -288,7 +289,13 @@ For a finance-user-friendly workflow:
 6. Review total rows, valid rows, invalid rows, and error summary.
 7. Click `Import`.
 
-The import job imports valid rows, skips invalid rows, and runs the receivables risk recalculation pipeline after a successful import.
+Clicking `Import` queues the job on a background worker instead of blocking the
+browser: the job moves through `Queued` → `Importing` → `Completed` (or
+`Completed With Errors`/`Failed`), and the form refreshes itself automatically
+via a realtime event once it's done. This keeps large CSV files from tying up
+a web worker or hitting a request timeout. The job imports valid rows, skips
+invalid rows, and runs the receivables risk recalculation pipeline after a
+successful import.
 
 ### 2. Import invoice data from CLI
 
@@ -391,7 +398,8 @@ What this demonstrates:
 - finance users can validate and import CSV data without running terminal commands;
 - invalid rows are summarized instead of silently imported;
 - valid rows are imported through the same idempotent importer used by the CLI path;
-- the risk recalculation pipeline runs after import.
+- the import runs on a background worker and the risk recalculation pipeline runs after it, so large files don't block the browser or a web worker;
+- the form updates itself via a realtime event when the background job finishes.
 
 ### 3. Optional CLI import path
 
@@ -665,7 +673,7 @@ receivable_risk_manager/
 - [x] Add Frappe workflow integration test coverage.
 - [x] Add dashboard-ready analytics report for risk distribution, exposure, aging, and collection workload.
 - [x] Add a Desk UI flow for CSV upload/import.
-- [ ] Add background job support for large imports.
+- [x] Add background job support for large imports.
 - [ ] Add optional ERPNext `Customer` / `Sales Invoice` mapping.
 - [ ] Add sales-order warning based on customer risk.
 - [ ] Explore receivables-focused predictive analytics after the rule-based workflow is stable.

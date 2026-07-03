@@ -35,7 +35,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nValidated\nValidation Failed\nImporting\nCompleted\nCompleted With Errors\nFailed",
+   "options": "Draft\nValidated\nValidation Failed\nQueued\nImporting\nCompleted\nCompleted With Errors\nFailed",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
