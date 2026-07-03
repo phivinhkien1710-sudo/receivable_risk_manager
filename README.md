@@ -50,6 +50,8 @@ This is not a production credit-risk system. It is an MVP-style engineering proj
 ## Screenshots
 
 The screenshots below show the main dataset and reporting views in Frappe Desk.
+See [`docs/screenshot_checklist.md`](docs/screenshot_checklist.md) for the
+click-by-click capture order used to produce these.
 
 ### Imported Receivables Invoice Data
 
@@ -246,6 +248,32 @@ apps/receivable_risk_manager/local_data/dataset_clean.csv
 
 The `local_data/` folder is ignored by Git except for its placeholder file.
 
+### Quick Demo Setup (One Command)
+
+Once the CSV is in place, `scripts/demo_setup.sh` installs the app on a site (if
+needed), imports the dataset, and runs the full recalculation pipeline in one
+step, so a reviewer can get from a fresh bench to a screenshot-ready dashboard
+without following the manual steps below one by one.
+
+```bash
+cd /path/to/frappe-bench
+./apps/receivable_risk_manager/scripts/demo_setup.sh staging.local
+```
+
+Optional arguments override the CSV path and row limit (defaults to
+`local_data/dataset_clean.csv` and 2000 rows):
+
+```bash
+./apps/receivable_risk_manager/scripts/demo_setup.sh staging.local local_data/dataset_clean.csv 5000
+```
+
+Note: pass an absolute `csv_path` if you call
+`receivable_risk_manager.imports.invoice_imports.import_dataset` directly via
+`bench execute` yourself — the `bench` CLI changes its working directory to
+`sites/` before running any command, so a relative path like
+`apps/receivable_risk_manager/local_data/dataset_clean.csv` will not resolve
+from the bench root the way it does in a plain shell.
+
 ## Usage
 
 ### 1. Import invoice data from Desk
@@ -269,15 +297,20 @@ The command-line importer is still available for development and repeatable loca
 ```bash
 cd /path/to/frappe-bench
 bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
-  --kwargs "{'csv_path': 'apps/receivable_risk_manager/local_data/dataset_clean.csv'}"
+  --kwargs "{'csv_path': '$(pwd)/apps/receivable_risk_manager/local_data/dataset_clean.csv'}"
 ```
 
 For a smaller smoke test:
 
 ```bash
 bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
-  --kwargs "{'csv_path': 'apps/receivable_risk_manager/local_data/dataset_clean.csv', 'limit': 1000}"
+  --kwargs "{'csv_path': '$(pwd)/apps/receivable_risk_manager/local_data/dataset_clean.csv', 'limit': 1000}"
 ```
+
+`csv_path` must be absolute: the `bench` CLI changes its working directory to
+`sites/` before running any command, so a path relative to the bench root
+(like `apps/receivable_risk_manager/...`) will not resolve and the importer
+will fail with "CSV file not found".
 
 ### 3. Run the full recalculation pipeline
 
@@ -367,14 +400,14 @@ In a second terminal:
 ```bash
 cd /path/to/frappe-bench
 bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
-  --kwargs "{'csv_path': 'apps/receivable_risk_manager/local_data/dataset_clean.csv'}"
+  --kwargs "{'csv_path': '$(pwd)/apps/receivable_risk_manager/local_data/dataset_clean.csv'}"
 ```
 
 For a faster demo reset or smoke test, import a smaller slice:
 
 ```bash
 bench --site staging.local execute receivable_risk_manager.imports.invoice_imports.import_dataset \
-  --kwargs "{'csv_path': 'apps/receivable_risk_manager/local_data/dataset_clean.csv', 'limit': 1000}"
+  --kwargs "{'csv_path': '$(pwd)/apps/receivable_risk_manager/local_data/dataset_clean.csv', 'limit': 1000}"
 ```
 
 What this demonstrates:
