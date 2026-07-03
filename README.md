@@ -153,6 +153,7 @@ dataset_clean.csv
 - Open invoice risk assessment.
 - Collection action generation.
 - Duplicate-safe active collection action creation.
+- Enforced `Collection Action` workflow (Open → Contacted → Promised to Pay → Escalated/Resolved) with role-gated transitions.
 - Stale-record handling when invoices close.
 - Basic risk audit log for score and level changes.
 - Lightweight DocType validations for core data integrity.
@@ -200,6 +201,42 @@ Rule-based scoring is:
 The invoice dataset is historical, so invoice risk is calculated using an analysis date based on the latest `posting_date` in the dataset instead of today’s real date.
 
 This prevents all historical open invoices from becoming artificially overdue just because the project is being run now.
+
+### Collection Action as a Frappe Workflow instead of a plain status field
+
+`Collection Action.status` used to be a plain Select field: any user with write
+access could jump straight from `Open` to `Resolved` with no enforcement and
+no role gating. It's now backed by a real Frappe `Workflow`
+(`receivable_risk_manager/services/collection_action_workflow.py`, applied via
+the `create_collection_action_workflow` patch) that reuses the existing
+`status` field as the workflow state field, so no schema change or extra
+hidden field was needed.
+
+States and transitions:
+
+```text
+Open --Mark as Contacted--> Contacted
+Open --Escalate--> Escalated
+Open --Resolve--> Resolved
+Contacted --Record Promise to Pay--> Promised to Pay
+Contacted --Escalate--> Escalated
+Contacted --Resolve--> Resolved
+Promised to Pay --Resolve--> Resolved
+Promised to Pay --Escalate--> Escalated
+Escalated --Resolve--> Resolved
+Resolved --Reopen--> Open
+```
+
+Routine day-to-day progress (contacting a customer, recording a promise to
+pay, resolving a case) is left to `Accounts User`. Escalating a case or
+reopening a resolved one requires `Accounts Manager`, mirroring the sign-off
+most credit-control teams expect for those actions. The transition rules are
+enforced on every save, not just through the workflow action buttons, and
+apply independently of the batch pipeline: `generate_collection_actions`
+still creates new actions directly in the `Open` state (that's document
+creation, not a transition), and `resolve_actions_for_closed_invoices` still
+force-resolves stale actions via a direct DB update rather than `doc.save()`,
+since that's a system cleanup step rather than a user decision.
 
 ## Getting Started
 
