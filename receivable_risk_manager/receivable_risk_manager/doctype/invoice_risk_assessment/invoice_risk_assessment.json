@@ -23,7 +23,12 @@
   "risk_level",
   "explanation",
   "last_calculated_on",
-  "suggested_action"
+  "suggested_action",
+  "receivables_import_job",
+  "last_ai_review_run",
+  "ai_recommended_action",
+  "ai_confidence",
+  "ai_reasoning"
  ],
  "fields": [
   {
@@ -168,6 +173,41 @@
    "label": "Is Open",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "receivables_import_job",
+   "fieldtype": "Link",
+   "label": "Import Batch",
+   "options": "Receivables Import Job",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "last_ai_review_run",
+   "fieldtype": "Link",
+   "label": "Last AI Review Run",
+   "options": "AI Review Run",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "ai_recommended_action",
+   "fieldtype": "Data",
+   "label": "AI Recommended Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ai_confidence",
+   "fieldtype": "Float",
+   "label": "AI Confidence",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ai_reasoning",
+   "fieldtype": "Small Text",
+   "label": "AI Reasoning",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

@@ -51,6 +51,10 @@ frappe.ui.form.on("Receivables Import Job", {
 			});
 		}
 
+		if (["Completed", "Completed With Errors"].includes(frm.doc.status)) {
+			add_batch_workflow_menu(frm);
+		}
+
 		if (["Queued", "Importing"].includes(frm.doc.status)) {
 			frm.dashboard.set_headline_alert(
 				__(
@@ -74,4 +78,55 @@ function register_import_job_listener(frm) {
 			frm.reload_doc();
 		}
 	});
+}
+
+
+// The batch workflow menu. Every stage a user can run against this specific
+// import lives here, so an import is something you *process* rather than an
+// event that dumps rows into one global pool. Nothing here starts a stage on
+// its own: each entry opens a pre-filled form or a scoped queue, and the user
+// still clicks the start button there.
+function add_batch_workflow_menu(frm) {
+	frm.add_custom_button(
+		__("Run AI Review"),
+		() => {
+			frappe.new_doc("AI Review Run", {
+				receivables_import_job: frm.doc.name,
+			});
+		},
+		__("Batch Workflow")
+	);
+
+	frm.add_custom_button(
+		__("Review Proposals"),
+		() => {
+			frappe.set_route("query-report", "Collection Action Queue", {
+				receivables_import_job: frm.doc.name,
+				status: "Proposed",
+			});
+		},
+		__("Batch Workflow")
+	);
+
+	frm.add_custom_button(
+		__("Disagreements Only"),
+		() => {
+			frappe.set_route("query-report", "Collection Action Queue", {
+				receivables_import_job: frm.doc.name,
+				status: "Proposed",
+				disagreements_only: 1,
+			});
+		},
+		__("Batch Workflow")
+	);
+
+	frm.add_custom_button(
+		__("AI Review History"),
+		() => {
+			frappe.set_route("List", "AI Review Run", {
+				receivables_import_job: frm.doc.name,
+			});
+		},
+		__("Batch Workflow")
+	);
 }

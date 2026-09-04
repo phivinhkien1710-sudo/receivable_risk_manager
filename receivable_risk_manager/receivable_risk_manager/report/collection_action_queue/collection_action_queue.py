@@ -59,10 +59,41 @@ def get_columns():
 			"width": 100,
 		},
 		{
+			"label": "Rule Said",
+			"fieldname": "rule_proposed_action",
+			"fieldtype": "Data",
+			"width": 150,
+		},
+		{
+			"label": "AI Said",
+			"fieldname": "ai_proposed_action",
+			"fieldtype": "Data",
+			"width": 150,
+		},
+		{
+			"label": "Agreed",
+			"fieldname": "ai_agreed_with_rules",
+			"fieldtype": "Check",
+			"width": 70,
+		},
+		{
+			"label": "AI Confidence",
+			"fieldname": "ai_confidence",
+			"fieldtype": "Float",
+			"precision": "2",
+			"width": 110,
+		},
+		{
+			"label": "AI Reasoning",
+			"fieldname": "ai_reasoning",
+			"fieldtype": "Data",
+			"width": 420,
+		},
+		{
 			"label": "Notes",
 			"fieldname": "notes",
 			"fieldtype": "Data",
-			"width": 450,
+			"width": 300,
 		},
 	]
 
@@ -82,6 +113,11 @@ def get_data(filters):
 			"status",
 			"due_date",
 			"created_from_risk_score",
+			"rule_proposed_action",
+			"ai_proposed_action",
+			"ai_agreed_with_rules",
+			"ai_confidence",
+			"ai_reasoning",
 			"notes",
 		],
 		order_by="due_date asc, created_from_risk_score desc",
@@ -108,6 +144,19 @@ def build_report_filters(filters):
 	customer_id = clean_text(filters.get("customer_id"))
 	if customer_id:
 		report_filters["customer_id"] = customer_id
+
+	receivables_import_job = clean_text(filters.get("receivables_import_job"))
+	if receivables_import_job:
+		report_filters["receivables_import_job"] = receivables_import_job
+
+	ai_review_run = clean_text(filters.get("ai_review_run"))
+	if ai_review_run:
+		report_filters["ai_review_run"] = ai_review_run
+
+	# The whole reason AI review is worth running: surface only the invoices
+	# where Claude and the rule engine reached different conclusions.
+	if filters.get("disagreements_only"):
+		report_filters["ai_agreed_with_rules"] = 0
 
 	return report_filters
 

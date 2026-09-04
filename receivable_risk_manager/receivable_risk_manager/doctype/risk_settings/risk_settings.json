@@ -12,7 +12,11 @@
   "late_payment_weight",
   "high_outstanding_weight",
   "multiple_unpaid_weight",
-  "unusually_large_invoice_weight"
+  "unusually_large_invoice_weight",
+  "ai_review_section",
+  "ai_min_confidence",
+  "ai_review_chunk_size",
+  "ai_review_model"
  ],
  "fields": [
   {
@@ -72,6 +76,32 @@
    "fieldtype": "Int",
    "label": "Unusually Large Invoice Weight",
    "reqd": 1
+  },
+  {
+   "fieldname": "ai_review_section",
+   "fieldtype": "Section Break",
+   "label": "AI Review"
+  },
+  {
+   "fieldname": "ai_min_confidence",
+   "fieldtype": "Float",
+   "label": "AI Minimum Confidence",
+   "precision": "2",
+   "default": "0.7",
+   "description": "Below this, Claude's verdict is discarded and the rule engine's recommendation is used instead."
+  },
+  {
+   "fieldname": "ai_review_chunk_size",
+   "fieldtype": "Int",
+   "label": "AI Review Chunk Size",
+   "default": "25",
+   "description": "How many invoices are sent to Claude per CLI call."
+  },
+  {
+   "fieldname": "ai_review_model",
+   "fieldtype": "Data",
+   "label": "AI Review Model",
+   "default": "haiku"
   }
  ],
  "grid_page_length": 50,

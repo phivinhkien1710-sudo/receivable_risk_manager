@@ -128,7 +128,20 @@ def run_import_job(job_name):
 				as_of_date=str(job.as_of_date or "2020-05-31"),
 			)
 
+		# Record which invoices this batch brought in *before* recalculating, so
+		# the assessments that recalculation creates can be stamped with it.
+		from receivable_risk_manager.services.batches import (
+			record_batch_membership,
+			stamp_batch_on_downstream_records,
+		)
+
+		record_batch_membership(
+			job.name,
+			[row.get("invoice_id") for row in validation["valid_data_rows"]],
+		)
+
 		recalculation_result = run_recalculation()
+		stamp_batch_on_downstream_records(job.name)
 		update_job_with_import_result(job, import_result, recalculation_result, validation)
 		notify_import_job_update(job)
 		return {

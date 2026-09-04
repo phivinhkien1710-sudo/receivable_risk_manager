@@ -1,7 +1,6 @@
 import frappe
 
 from receivable_risk_manager.services.ai_agent import generate_ai_drafts_for_proposed_actions
-from receivable_risk_manager.services.collection_actions import generate_collection_actions
 from receivable_risk_manager.services.customer_aggregation import recalculate_receivables_customers
 from receivable_risk_manager.services.customer_risk import recalculate_all_customer_risks
 from receivable_risk_manager.services.follow_up import run_follow_up_check
@@ -17,6 +16,15 @@ def run_full_recalculation():
 	This function is safe to run manually with bench execute. It runs each major
 	step in order and stops if one step raises an exception, because downstream
 	steps depend on the earlier results being fresh.
+
+	Deliberately scoring-only: proposing collection actions from assessments now
+	happens in an AI Review Run, which a human starts against one import batch
+	(see services/ai_review.py). Nothing that decides what to do about a customer
+	fires unattended on a schedule any more — the one exception is
+	follow_up_check, which escalates already-approved actions that went stale and
+	is fully deterministic. services/collection_actions.py's
+	generate_collection_actions() stays importable as a rules-only fallback for
+	when the Claude CLI is unavailable.
 	"""
 
 	logger = frappe.logger(LOGGER_NAME)
@@ -28,7 +36,6 @@ def run_full_recalculation():
 		"customer_aggregation": None,
 		"customer_risk_scoring": None,
 		"invoice_risk_assessment": None,
-		"collection_action_generation": None,
 		"follow_up_check": None,
 		"ai_draft_generation": None,
 	}
@@ -57,14 +64,6 @@ def run_full_recalculation():
 			function=recalculate_all_invoice_risk_assessments,
 		)
 		summary["has_errors"] = summary["has_errors"] or summary["invoice_risk_assessment"]["has_errors"]
-
-		summary["collection_action_generation"] = _run_pipeline_step(
-			logger=logger,
-			step_key="collection_action_generation",
-			step_label="Collection action generation",
-			function=generate_collection_actions,
-		)
-		summary["has_errors"] = summary["has_errors"] or summary["collection_action_generation"]["has_errors"]
 
 		summary["follow_up_check"] = _run_pipeline_step(
 			logger=logger,
@@ -197,7 +196,6 @@ def _get_failed_step(summary):
 		"customer_aggregation",
 		"customer_risk_scoring",
 		"invoice_risk_assessment",
-		"collection_action_generation",
 		"follow_up_check",
 		"ai_draft_generation",
 	):

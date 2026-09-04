@@ -1,0 +1,246 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "AIRV-.#####",
+ "creation": "2026-09-04 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "run_trigger",
+  "receivables_import_job",
+  "limit_rows",
+  "model_used",
+  "chunk_size_used",
+  "min_confidence_used",
+  "results_section",
+  "assessments_in_scope",
+  "assessments_reviewed",
+  "proposed_action",
+  "proposed_no_action",
+  "actions_created",
+  "actions_already_existed",
+  "agreed_with_rules",
+  "disagreed_with_rules",
+  "low_confidence_fallback",
+  "error_rows",
+  "chunks_total",
+  "chunks_failed",
+  "timing_section",
+  "started_on",
+  "completed_on",
+  "error_summary"
+ ],
+ "fields": [
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nQueued\nRunning\nCompleted\nCompleted With Errors\nFailed",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Manual",
+   "fieldname": "run_trigger",
+   "fieldtype": "Select",
+   "label": "Trigger",
+   "options": "Manual\nPost Import\nScheduled",
+   "read_only": 1
+  },
+  {
+   "description": "Restrict this review to invoices that came in with one import batch. Leave blank to review every eligible open assessment.",
+   "fieldname": "receivables_import_job",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Import Batch",
+   "options": "Receivables Import Job",
+   "search_index": 1
+  },
+  {
+   "description": "Optional cap on how many assessments this run reviews. Blank means no cap.",
+   "fieldname": "limit_rows",
+   "fieldtype": "Int",
+   "label": "Limit Rows"
+  },
+  {
+   "fieldname": "model_used",
+   "fieldtype": "Data",
+   "label": "Model Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "chunk_size_used",
+   "fieldtype": "Int",
+   "label": "Chunk Size Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "min_confidence_used",
+   "fieldtype": "Float",
+   "label": "Min Confidence Used",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "results_section",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "assessments_in_scope",
+   "fieldtype": "Int",
+   "label": "Assessments In Scope",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessments_reviewed",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Reviewed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposed_action",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Proposed Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposed_no_action",
+   "fieldtype": "Int",
+   "label": "Proposed No Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agreed_with_rules",
+   "fieldtype": "Int",
+   "label": "Agreed With Rules",
+   "read_only": 1
+  },
+  {
+   "description": "Claude proposed something different from the rule engine. These are the rows worth a human's attention first.",
+   "fieldname": "disagreed_with_rules",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Disagreed With Rules",
+   "read_only": 1
+  },
+  {
+   "description": "Claude's confidence fell below the threshold, so the rule engine's own recommendation was used instead.",
+   "fieldname": "low_confidence_fallback",
+   "fieldtype": "Int",
+   "label": "Low Confidence Fallback",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_rows",
+   "fieldtype": "Int",
+   "label": "Error Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "chunks_total",
+   "fieldtype": "Int",
+   "label": "CLI Chunks Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "chunks_failed",
+   "fieldtype": "Int",
+   "label": "CLI Chunks Failed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "timing_section",
+   "fieldtype": "Section Break",
+   "label": "Timing"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_summary",
+   "fieldtype": "Small Text",
+   "label": "Error Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actions_created",
+   "fieldtype": "Int",
+   "label": "Actions Created",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "New Collection Actions this run actually created."
+  },
+  {
+   "fieldname": "actions_already_existed",
+   "fieldtype": "Int",
+   "label": "Already Had An Action",
+   "read_only": 1,
+   "description": "Reviewed invoices that already had an active action of the proposed type, so nothing new was created."
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "receivable_risk_manager",
+ "name": "AI Review Run",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
