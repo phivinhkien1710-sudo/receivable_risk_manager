@@ -46,6 +46,8 @@ class TestReceivablesWorkflow(FrappeTestCase):
 		self.assertEqual(duplicate_action["status"], "skipped")
 
 		action_doc = frappe.get_doc("Collection Action", first_action["collection_action"])
+		action_doc.status = "Open"
+		action_doc.save(ignore_permissions=True)
 		action_doc.status = "Resolved"
 		action_doc.save(ignore_permissions=True)
 

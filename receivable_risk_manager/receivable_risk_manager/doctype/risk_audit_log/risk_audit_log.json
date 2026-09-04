@@ -43,7 +43,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Entity Type",
-   "options": "Customer\nInvoice",
+   "options": "Customer\nInvoice\nCollection Action",
    "read_only": 1,
    "reqd": 1
   },
@@ -102,7 +102,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Source",
-   "options": "Customer Risk\nInvoice Risk\nPipeline",
+   "options": "Customer Risk\nInvoice Risk\nPipeline\nAI Agent\nManual Review",
    "read_only": 1,
    "reqd": 1
   },

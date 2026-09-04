@@ -9,17 +9,21 @@ WORKFLOW_STATE_FIELD = "status"
 # instead of adding a separate workflow_state field, so every report/filter that
 # already reads `status` keeps working unchanged.
 STATES = [
+	{"state": "Proposed", "allow_edit": "Accounts Manager"},
 	{"state": "Open", "allow_edit": "Accounts User"},
 	{"state": "Contacted", "allow_edit": "Accounts User"},
 	{"state": "Promised to Pay", "allow_edit": "Accounts User"},
 	{"state": "Escalated", "allow_edit": "Accounts Manager"},
 	{"state": "Resolved", "allow_edit": "Accounts Manager"},
+	{"state": "Rejected", "allow_edit": "Accounts Manager"},
 ]
 
 # Routine day-to-day progress is left to Accounts User; escalating (raising the
 # severity of a case) and reopening a resolved case require Accounts Manager,
 # mirroring the sign-off most credit-control teams expect for those actions.
 TRANSITIONS = [
+	{"state": "Proposed", "action": "Approve", "next_state": "Open", "allowed": "Accounts Manager"},
+	{"state": "Proposed", "action": "Reject", "next_state": "Rejected", "allowed": "Accounts Manager"},
 	{"state": "Open", "action": "Mark as Contacted", "next_state": "Contacted", "allowed": "Accounts User"},
 	{"state": "Open", "action": "Escalate", "next_state": "Escalated", "allowed": "Accounts Manager"},
 	{"state": "Open", "action": "Resolve", "next_state": "Resolved", "allowed": "Accounts User"},

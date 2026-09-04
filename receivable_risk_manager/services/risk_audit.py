@@ -55,6 +55,46 @@ def log_risk_change(
 		)
 		return None
 
+def log_collection_action_event(
+	collection_action_name,
+	reason,
+	source,
+	customer_id=None,
+	external_invoice_id=None,
+):
+	"""Create an audit log entry for a Collection Action event (status transition,
+	AI draft generated, etc). Unlike log_risk_change, this always writes - there is
+	no score/level delta to gate on for a workflow event.
+	"""
+
+	try:
+		doc = frappe.new_doc(AUDIT_DOCTYPE)
+		doc.update(
+			{
+				"reference_doctype": "Collection Action",
+				"reference_name": collection_action_name,
+				"entity_type": "Collection Action",
+				"customer_id": customer_id,
+				"external_invoice_id": external_invoice_id,
+				"previous_score": 0,
+				"new_score": 0,
+				"previous_level": "",
+				"new_level": "",
+				"reason": reason,
+				"source": source,
+				"calculated_on": now_datetime(),
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		return doc.name
+	except Exception:
+		frappe.log_error(
+			title=f"Collection action audit log failed for {collection_action_name}",
+			message=frappe.get_traceback(),
+		)
+		return None
+
+
 def _safe_int(value):
 	if value in (None, ""):
 		return 0

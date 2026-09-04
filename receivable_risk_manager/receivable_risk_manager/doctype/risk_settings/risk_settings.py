@@ -10,11 +10,13 @@ class RiskSettings(Document):
 		self._set_missing_defaults()
 		self._validate_thresholds()
 		self._validate_weights()
+		self._validate_follow_up_days()
 
 	def _set_missing_defaults(self):
 		defaults = {
 			"high_risk_threshold": 70,
 			"medium_risk_threshold": 40,
+			"follow_up_days": 3,
 			"overdue_weight": 30,
 			"late_payment_weight": 20,
 			"high_outstanding_weight": 20,
@@ -38,6 +40,11 @@ class RiskSettings(Document):
 
 		if high_threshold > 100:
 			frappe.throw("High Risk Threshold cannot be greater than 100.")
+
+	def _validate_follow_up_days(self):
+		follow_up_days = int(self.follow_up_days or 0)
+		if follow_up_days < 1:
+			frappe.throw("Follow Up Days must be at least 1.")
 
 	def _validate_weights(self):
 		weight_fields = (

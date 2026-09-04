@@ -7,6 +7,7 @@
  "field_order": [
   "high_risk_threshold",
   "medium_risk_threshold",
+  "follow_up_days",
   "overdue_weight",
   "late_payment_weight",
   "high_outstanding_weight",
@@ -27,6 +28,14 @@
    "fieldname": "medium_risk_threshold",
    "fieldtype": "Int",
    "label": "Medium Risk Threshold",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "description": "Days past a Collection Action's due date with no resolution before the system automatically proposes escalating it as a new step (still requires human approval).",
+   "fieldname": "follow_up_days",
+   "fieldtype": "Int",
+   "label": "Follow Up Days",
    "reqd": 1
   },
   {

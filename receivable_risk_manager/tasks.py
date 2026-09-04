@@ -1,8 +1,10 @@
 import frappe
 
+from receivable_risk_manager.services.ai_agent import generate_ai_drafts_for_proposed_actions
 from receivable_risk_manager.services.collection_actions import generate_collection_actions
 from receivable_risk_manager.services.customer_aggregation import recalculate_receivables_customers
 from receivable_risk_manager.services.customer_risk import recalculate_all_customer_risks
+from receivable_risk_manager.services.follow_up import run_follow_up_check
 from receivable_risk_manager.services.invoice_risk import recalculate_all_invoice_risk_assessments
 
 
@@ -27,6 +29,8 @@ def run_full_recalculation():
 		"customer_risk_scoring": None,
 		"invoice_risk_assessment": None,
 		"collection_action_generation": None,
+		"follow_up_check": None,
+		"ai_draft_generation": None,
 	}
 
 	try:
@@ -61,6 +65,22 @@ def run_full_recalculation():
 			function=generate_collection_actions,
 		)
 		summary["has_errors"] = summary["has_errors"] or summary["collection_action_generation"]["has_errors"]
+
+		summary["follow_up_check"] = _run_pipeline_step(
+			logger=logger,
+			step_key="follow_up_check",
+			step_label="Follow-up check",
+			function=run_follow_up_check,
+		)
+		summary["has_errors"] = summary["has_errors"] or summary["follow_up_check"]["has_errors"]
+
+		summary["ai_draft_generation"] = _run_pipeline_step(
+			logger=logger,
+			step_key="ai_draft_generation",
+			step_label="AI draft generation",
+			function=generate_ai_drafts_for_proposed_actions,
+		)
+		summary["has_errors"] = summary["has_errors"] or summary["ai_draft_generation"]["has_errors"]
 
 	except Exception as exc:
 		summary["status"] = "failed"
@@ -178,6 +198,8 @@ def _get_failed_step(summary):
 		"customer_risk_scoring",
 		"invoice_risk_assessment",
 		"collection_action_generation",
+		"follow_up_check",
+		"ai_draft_generation",
 	):
 		if summary.get(step_key) is None:
 			return step_key

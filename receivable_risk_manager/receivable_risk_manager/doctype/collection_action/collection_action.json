@@ -18,6 +18,10 @@
   "due_date",
   "assigned_to",
   "notes",
+  "ai_recommendation_summary",
+  "ai_drafted_message",
+  "ai_drafted_on",
+  "ai_draft_error",
   "auto_generated",
   "active_invoice_key",
   "created_from_risk_score",
@@ -85,12 +89,12 @@
    "reqd": 1
   },
   {
-   "default": "Open",
+   "default": "Proposed",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open\nContacted\nPromised to Pay\nEscalated\nResolved",
+   "options": "Proposed\nOpen\nContacted\nPromised to Pay\nEscalated\nResolved\nRejected",
    "reqd": 1
   },
   {
@@ -110,6 +114,29 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "ai_recommendation_summary",
+   "fieldtype": "Small Text",
+   "label": "AI Recommendation Summary"
+  },
+  {
+   "fieldname": "ai_drafted_message",
+   "fieldtype": "Long Text",
+   "label": "AI Drafted Message"
+  },
+  {
+   "fieldname": "ai_drafted_on",
+   "fieldtype": "Datetime",
+   "label": "AI Drafted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ai_draft_error",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "AI Draft Error",
+   "read_only": 1
   },
   {
    "default": "0",

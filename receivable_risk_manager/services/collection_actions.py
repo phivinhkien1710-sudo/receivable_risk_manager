@@ -1,6 +1,10 @@
 import frappe
 from frappe.utils import add_days, getdate, now_datetime
 
+from receivable_risk_manager.receivable_risk_manager.doctype.collection_action.collection_action import (
+	TERMINAL_STATUSES,
+)
+
 
 INVOICE_DOCTYPE = "Receivables Invoice"
 ASSESSMENT_DOCTYPE = "Invoice Risk Assessment"
@@ -85,7 +89,7 @@ def collection_action_exists(external_invoice_id, action_type):
 			{
 				"external_invoice_id": external_invoice_id,
 				"action_type": action_type,
-				"status": ["!=", "Resolved"],
+				"status": ["not in", list(TERMINAL_STATUSES)],
 			},
 		)
 	)
@@ -140,7 +144,7 @@ def generate_collection_action_for_assessment(assessment_name, analysis_date=Non
 			"customer_name": assessment_doc.customer_name,
 			"action_type": action["action_type"],
 			"priority": action["priority"],
-			"status": "Open",
+			"status": "Proposed",
 			"due_date": action["due_date"],
 			"notes": action["notes"],
 			"auto_generated": 1,
@@ -247,7 +251,7 @@ def resolve_actions_for_closed_invoices():
 		FROM `tab{ACTION_DOCTYPE}` action
 		INNER JOIN `tab{ASSESSMENT_DOCTYPE}` assessment
 			ON assessment.name = action.invoice_risk_assessment
-		WHERE action.status != 'Resolved'
+		WHERE action.status NOT IN ('Resolved', 'Rejected')
 		  AND IFNULL(assessment.is_open, 0) = 0
 		ORDER BY action.name
 		""",
