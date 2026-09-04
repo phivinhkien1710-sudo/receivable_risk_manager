@@ -40,7 +40,12 @@ def _get_system_prompt():
 
 
 def _claude_cli_available():
-	return shutil.which(CLAUDE_BINARY) is not None
+	"""Shares ai_review's resolver: a bench worker's PATH is stripped, so
+	shutil.which alone silently fails in exactly the context that matters."""
+
+	from receivable_risk_manager.services.ai_review import claude_cli_available
+
+	return claude_cli_available()
 
 
 def draft_ai_recommendation(action_name):
@@ -193,9 +198,11 @@ def _call_claude(prompt):
 	model to the exact shape we need.
 	"""
 
+	from receivable_risk_manager.services.ai_review import get_claude_cli_path
+
 	completed = subprocess.run(
 		[
-			CLAUDE_BINARY,
+			get_claude_cli_path() or CLAUDE_BINARY,
 			"-p",
 			"--model",
 			CLAUDE_MODEL,

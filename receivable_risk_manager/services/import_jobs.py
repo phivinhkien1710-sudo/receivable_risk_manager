@@ -434,3 +434,84 @@ def get_frappe():
 	import frappe
 
 	return frappe
+
+
+def reconcile_stuck_import_jobs(stale_minutes=60):
+	"""Fail Import Jobs that claim to be Queued/Importing with nothing behind them.
+
+	`queue_import_job` sets status=Queued and hands the work to a background
+	worker. If no worker ever consumes it — or Redis restarts and the RQ entry
+	evaporates — the document keeps saying "Queued" forever while the form
+	cheerfully tells the user it is running in the background. That is exactly
+	how 27 jobs on the development site sat untouched for two months.
+
+	Nothing calls back into the job when its queue entry disappears, so this is
+	the same shape of problem lead_outreach_manager solves with its hourly
+	Outreach Email reconciliation cron: the queue is fire-and-forget, so
+	something has to come back and check.
+	"""
+
+	frappe = get_frappe()
+	threshold = frappe.utils.add_to_date(frappe.utils.now_datetime(), minutes=-stale_minutes)
+
+	summary = {"jobs_checked": 0, "jobs_failed": 0, "stale_minutes": stale_minutes}
+
+	stuck = frappe.get_all(
+		"Receivables Import Job",
+		filters={"status": ["in", ["Queued", "Importing"]], "modified": ["<", threshold]},
+		fields=["name", "status"],
+	)
+
+	for row in stuck:
+		summary["jobs_checked"] += 1
+
+		if has_live_queue_entry(row.name):
+			continue
+
+		frappe.db.set_value(
+			"Receivables Import Job",
+			row.name,
+			{
+				"status": "Failed",
+				"completed_on": frappe.utils.now_datetime(),
+				"error_summary": (
+					f"Marked failed by reconciliation: the job sat in {row.status} for over "
+					f"{stale_minutes} minutes with no live background-queue entry behind it. "
+					"The usual cause is that no bench worker was running when it was submitted. "
+					"Start the bench (so a worker exists) and submit the import again."
+				),
+			},
+			update_modified=True,
+		)
+		summary["jobs_failed"] += 1
+
+	frappe.db.commit()
+	return summary
+
+
+def has_live_queue_entry(job_name):
+	"""True if this job still has a real pending/running RQ entry.
+
+	Returns False rather than raising when the queue itself is unreachable —
+	an unreachable Redis is precisely the case where the job is not going to
+	run, so treating it as "no live entry" is the honest answer.
+	"""
+
+	frappe = get_frappe()
+
+	try:
+		from frappe.utils.background_jobs import get_queue
+
+		for queue_name in ("default", "long", "short"):
+			queue = get_queue(queue_name)
+			for job in queue.jobs:
+				if job.kwargs.get("receivables_import_job_name") == job_name:
+					return True
+	except Exception:
+		frappe.log_error(
+			title="Import job queue check failed",
+			message=frappe.get_traceback(),
+		)
+		return False
+
+	return False

@@ -16,7 +16,8 @@
   "ai_review_section",
   "ai_min_confidence",
   "ai_review_chunk_size",
-  "ai_review_model"
+  "ai_review_model",
+  "ai_review_cli_path"
  ],
  "fields": [
   {
@@ -102,13 +103,19 @@
    "fieldtype": "Data",
    "label": "AI Review Model",
    "default": "haiku"
+  },
+  {
+   "fieldname": "ai_review_cli_path",
+   "fieldtype": "Data",
+   "label": "AI Review CLI Path",
+   "description": "Absolute path to the claude binary. Leave blank to auto-detect. A background worker runs with a stripped PATH, so a CLI that works in your terminal may still be invisible to it."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-22 18:08:02.481031",
+ "modified": "2026-09-04 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "receivable_risk_manager",
  "name": "Risk Settings",

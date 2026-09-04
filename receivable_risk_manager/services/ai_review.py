@@ -16,7 +16,10 @@ the cost of a missed escalation is real money, and the cost of an unnecessary
 one is a human spending ten seconds rejecting it.
 """
 
+import glob
 import json
+import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -40,6 +43,9 @@ BATCH_MEMBER_DOCTYPE = "Receivables Batch Member"
 CUSTOMER_DOCTYPE = "Receivables Customer"
 
 CLAUDE_BINARY = "claude"
+# Matches the version in the Claude Code VS Code extension's install directory,
+# e.g. ".../anthropic.claude-code-2.1.212/resources/native-binary/claude".
+CLAUDE_EXTENSION_VERSION_RE = re.compile(r"claude-code-(\d+\.\d+\.\d+)")
 DEFAULT_MODEL = "haiku"
 DEFAULT_CHUNK_SIZE = 25
 DEFAULT_MIN_CONFIDENCE = 0.7
@@ -97,8 +103,71 @@ def _get_system_prompt():
 	return _system_prompt_cache
 
 
+def pick_newest_by_version(paths, version_re):
+	"""Pure: of several candidate binaries, pick the highest embedded version.
+	Paths with no version match sort last."""
+
+	if not paths:
+		return None
+
+	def version_key(path):
+		match = version_re.search(path)
+		return tuple(int(part) for part in match.group(1).split(".")) if match else (-1,)
+
+	return max(paths, key=version_key)
+
+
+def discover_claude_cli():
+	"""Locate a `claude` binary the operator already has.
+
+	`shutil.which` alone is not enough: a bench worker is spawned with a
+	stripped PATH that does not include Homebrew or a user's shell profile, so
+	a CLI that works fine in an interactive terminal is invisible to the
+	background job that actually needs it. This was not hypothetical — the
+	first AI Review Run started from the Desk UI failed instantly for exactly
+	this reason while the same code worked from a console.
+
+	The Claude Code VS Code extension bundles its own binary off-PATH, so check
+	there too. Same approach as lead_outreach_manager's discover_claude_cli.
+	"""
+
+	candidates = []
+	for base in ("~/.vscode/extensions", "~/.vscode-server/extensions"):
+		pattern = os.path.join(
+			os.path.expanduser(base),
+			"anthropic.claude-code-*",
+			"resources",
+			"native-binary",
+			"claude",
+		)
+		candidates.extend(path for path in glob.glob(pattern) if os.path.isfile(path))
+
+	return pick_newest_by_version(candidates, CLAUDE_EXTENSION_VERSION_RE) or shutil.which(
+		CLAUDE_BINARY
+	)
+
+
+def resolve_cli_path(configured_path, discover_fn=discover_claude_cli):
+	"""A configured absolute path wins if it is a real file; otherwise
+	auto-detect; otherwise fall back to the configured string itself so a bare
+	command name still gets tried via the subprocess's own PATH lookup."""
+
+	if configured_path and os.path.isfile(configured_path):
+		return configured_path
+
+	discovered = discover_fn()
+	return discovered or (configured_path or None)
+
+
+def get_claude_cli_path():
+	"""The binary this app should invoke, honouring the Risk Settings override."""
+
+	configured = (frappe.db.get_single_value("Risk Settings", "ai_review_cli_path") or "").strip()
+	return resolve_cli_path(configured)
+
+
 def claude_cli_available():
-	return shutil.which(CLAUDE_BINARY) is not None
+	return get_claude_cli_path() is not None
 
 
 def action_severity(action_type):
@@ -264,9 +333,11 @@ def call_claude_for_chunk(payload, model):
 	key. Tools are disabled since this only needs to return structured text.
 	"""
 
+	binary = get_claude_cli_path() or CLAUDE_BINARY
+
 	completed = subprocess.run(
 		[
-			CLAUDE_BINARY,
+			binary,
 			"-p",
 			"--model",
 			model,
@@ -462,7 +533,12 @@ def run_ai_review(run_name):
 			{
 				"status": "Failed",
 				"completed_on": now_datetime(),
-				"error_summary": "Claude Code CLI not found on PATH. Run `claude login` on the host that runs the background worker.",
+				"error_summary": (
+					"Claude Code CLI could not be located. It was not on the background "
+					"worker's PATH (which is stripped, and does not inherit your shell "
+					"profile), and no bundled VS Code extension binary was found. Set an "
+					"absolute path in Risk Settings > AI Review CLI Path."
+				),
 			},
 			update_modified=False,
 		)

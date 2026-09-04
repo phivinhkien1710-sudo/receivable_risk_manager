@@ -125,3 +125,49 @@ class TestReconcile(unittest.TestCase):
 
 		self.assertEqual(final["action_type"], "Escalate Collection")
 		self.assertEqual(meta["outcome"], "ai_softened_overridden")
+
+
+class TestCliResolution(unittest.TestCase):
+	"""The bug that made the first UI-started run fail: a bench worker's PATH is
+	stripped, so shutil.which alone finds nothing in exactly the process that
+	needs the binary. resolve_cli_path is pure given a fake discover_fn."""
+
+	def test_configured_absolute_path_wins_when_it_exists(self):
+		from receivable_risk_manager.services.ai_review import resolve_cli_path
+
+		# __file__ is guaranteed to be a real file on disk.
+		self.assertEqual(
+			resolve_cli_path(__file__, discover_fn=lambda: "/discovered/claude"),
+			__file__,
+		)
+
+	def test_falls_back_to_discovery_when_configured_path_is_missing(self):
+		from receivable_risk_manager.services.ai_review import resolve_cli_path
+
+		self.assertEqual(
+			resolve_cli_path("/nope/not/here", discover_fn=lambda: "/discovered/claude"),
+			"/discovered/claude",
+		)
+
+	def test_falls_back_to_the_bare_name_so_subprocess_can_still_try_path(self):
+		from receivable_risk_manager.services.ai_review import resolve_cli_path
+
+		self.assertEqual(resolve_cli_path("claude", discover_fn=lambda: None), "claude")
+
+	def test_returns_none_when_nothing_is_configured_or_found(self):
+		from receivable_risk_manager.services.ai_review import resolve_cli_path
+
+		self.assertIsNone(resolve_cli_path("", discover_fn=lambda: None))
+
+	def test_newest_extension_version_wins(self):
+		from receivable_risk_manager.services.ai_review import (
+			CLAUDE_EXTENSION_VERSION_RE,
+			pick_newest_by_version,
+		)
+
+		paths = [
+			"/ext/anthropic.claude-code-2.1.9/resources/native-binary/claude",
+			"/ext/anthropic.claude-code-2.1.260/resources/native-binary/claude",
+			"/ext/anthropic.claude-code-2.1.100/resources/native-binary/claude",
+		]
+		self.assertIn("2.1.260", pick_newest_by_version(paths, CLAUDE_EXTENSION_VERSION_RE))

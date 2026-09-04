@@ -149,6 +149,12 @@ app_license = "mit"
 # ---------------
 
 scheduler_events = {
+	"hourly": [
+		# Queue work is fire-and-forget; nothing calls back when an RQ entry
+		# disappears, so a job can sit in "Queued" forever with no worker behind
+		# it. This closes that loop.
+		"receivable_risk_manager.tasks.hourly_reconcile_import_jobs"
+	],
 	"daily": [
 		"receivable_risk_manager.tasks.daily_recalculate_receivables_risk"
 	],

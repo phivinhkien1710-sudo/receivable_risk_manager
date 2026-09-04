@@ -203,3 +203,20 @@ def _get_failed_step(summary):
 			return step_key
 
 	return "unknown"
+
+
+def hourly_reconcile_import_jobs():
+	"""Scheduler entrypoint. See services.import_jobs.reconcile_stuck_import_jobs."""
+
+	from receivable_risk_manager.services.import_jobs import reconcile_stuck_import_jobs
+
+	logger = frappe.logger(LOGGER_NAME)
+	result = reconcile_stuck_import_jobs()
+
+	if result["jobs_failed"]:
+		logger.warning(
+			"Reconciliation failed %s stuck import job(s) with no live queue entry",
+			result["jobs_failed"],
+		)
+
+	return result
