@@ -30,8 +30,8 @@ from frappe.utils import cint, flt, getdate, now_datetime
 from receivable_risk_manager.services.collection_actions import (
 	ACTION_DOCTYPE,
 	ASSESSMENT_DOCTYPE,
-	collection_action_exists,
 	get_action_from_assessment,
+	get_active_collection_action_name,
 	get_active_invoice_key,
 	get_analysis_date,
 )
@@ -457,7 +457,44 @@ def _apply_verdict(row, rule_action, final_action, meta, run_name, analysis_date
 	if not final_action:
 		return "no_action"
 
-	if collection_action_exists(row.external_invoice_id, final_action["action_type"]):
+	existing_name = get_active_collection_action_name(row.external_invoice_id, final_action["action_type"])
+	if existing_name:
+		# The invoice already has an active action, so nothing new gets
+		# created -- but the verdict still needs to be visible somewhere a
+		# human will actually look. Without this, a disagreement on an
+		# already-existing action was recorded only on Invoice Risk
+		# Assessment, which the Collection Action Queue's "Disagreements
+		# Only" filter never reads -- so it was invisible in the one place
+		# a reviewer would think to check. Annotates the existing record
+		# with the same AI fields a newly-created one gets; deliberately
+		# never touches its action_type/priority/status, since AI review
+		# only ever informs an existing action, never silently changes what
+		# a human is already looking at.
+		frappe.db.set_value(
+			ACTION_DOCTYPE,
+			existing_name,
+			{
+				"rule_proposed_action": rule_action["action_type"] if rule_action else NO_ACTION,
+				"ai_proposed_action": meta.get("ai_proposed_action"),
+				"ai_reasoning": meta.get("ai_reasoning"),
+				"ai_confidence": meta.get("ai_confidence"),
+				"ai_agreed_with_rules": meta.get("agreed", 1),
+				"ai_review_run": run_name,
+			},
+			update_modified=False,
+		)
+		if not meta.get("agreed", 1):
+			log_collection_action_event(
+				collection_action_name=existing_name,
+				reason=(
+					f"AI review re-examined this existing action and disagreed: "
+					f"proposed {meta.get('ai_proposed_action')} vs the current "
+					f"{final_action['action_type']}. {meta.get('ai_reasoning') or ''}"
+				),
+				source="AI Agent",
+				customer_id=row.customer_id,
+				external_invoice_id=row.external_invoice_id,
+			)
 		return "already_exists"
 
 	doc = frappe.new_doc(ACTION_DOCTYPE)

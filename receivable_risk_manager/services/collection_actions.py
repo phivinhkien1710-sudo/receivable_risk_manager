@@ -95,6 +95,24 @@ def collection_action_exists(external_invoice_id, action_type):
 	)
 
 
+def get_active_collection_action_name(external_invoice_id, action_type):
+	"""Same match as collection_action_exists(), but returns the record's name
+	instead of a bool -- for callers that need to update it, not just check."""
+
+	if not external_invoice_id or not action_type:
+		return None
+
+	return frappe.db.get_value(
+		ACTION_DOCTYPE,
+		{
+			"external_invoice_id": external_invoice_id,
+			"action_type": action_type,
+			"status": ["not in", list(TERMINAL_STATUSES)],
+		},
+		"name",
+	)
+
+
 def get_active_invoice_key(external_invoice_id, action_type):
 	"""Return the stable key used to identify an active invoice/action pair."""
 

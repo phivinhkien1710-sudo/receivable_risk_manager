@@ -10,8 +10,13 @@ integration path that would need Claude to be reachable.
 
 import unittest
 
+import frappe
+from frappe.tests.utils import FrappeTestCase
+from frappe.utils import now_datetime
+
 from receivable_risk_manager.services.ai_review import (
 	NO_ACTION,
+	_apply_verdict,
 	action_severity,
 	reconcile,
 )
@@ -171,3 +176,167 @@ class TestCliResolution(unittest.TestCase):
 			"/ext/anthropic.claude-code-2.1.100/resources/native-binary/claude",
 		]
 		self.assertIn("2.1.260", pick_newest_by_version(paths, CLAUDE_EXTENSION_VERSION_RE))
+
+
+class TestApplyVerdictOnExistingAction(FrappeTestCase):
+	"""_apply_verdict() against an invoice that already has an active
+	Collection Action -- the case reconcile()'s own unit tests can't cover,
+	since they test the reconciliation policy in isolation, not what happens
+	to the database record afterward.
+
+	This is the fix for a real gap: a disagreement on an already-existing
+	action used to be recorded only on Invoice Risk Assessment, which the
+	Collection Action Queue's "Disagreements Only" filter never reads --
+	invisible in the one place a reviewer would think to check. Confirmed
+	against a real AI Review Run (AIRV-00006) on staging.local: 4 of 25
+	disagreements were silently unsurfaced this way before this fix.
+	"""
+
+	def setUp(self):
+		self.test_prefix = "TEST-RRM-APPLYVERDICT"
+		self.customer_id = f"{self.test_prefix}-CUSTOMER"
+		self.external_invoice_id = f"{self.test_prefix}-INVOICE-1"
+		self.customer = self._create_customer()
+		self.invoice = self._create_invoice()
+		self.assessment = self._create_assessment()
+		self.existing_action = self._create_existing_action()
+
+	def tearDown(self):
+		for dt in ("Collection Action", "Risk Audit Log", "Invoice Risk Assessment", "Receivables Invoice"):
+			for row in frappe.get_all(dt, filters={"customer_id": self.customer_id}, fields=["name"]):
+				frappe.delete_doc(dt, row.name, force=True, ignore_permissions=True)
+		frappe.delete_doc("Receivables Customer", self.customer.name, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+	def test_disagreement_annotates_existing_action_without_changing_its_type(self):
+		row = frappe._dict(
+			{
+				"assessment_name": self.assessment.name,
+				"external_invoice_id": self.external_invoice_id,
+				"customer_id": self.customer_id,
+				"customer_name": "Test ApplyVerdict Co",
+				"risk_score": 90,
+			}
+		)
+		rule_action = {"action_type": "Escalate Collection", "priority": "High", "due_date": None, "notes": "rule"}
+		final_action = dict(rule_action)  # softened-and-overridden case: floor kept as-is
+		meta = {
+			"ai_proposed_action": "Immediate Follow-up",
+			"ai_reasoning": "Reliable customer, one anomalous invoice.",
+			"ai_confidence": 0.76,
+			"agreed": 0,
+			"outcome": "ai_softened_overridden",
+		}
+
+		outcome = _apply_verdict(row, rule_action, final_action, meta, "TEST-RUN-1", frappe.utils.today())
+
+		self.assertEqual(outcome, "already_exists")
+		self.assertEqual(
+			frappe.db.count("Collection Action", {"customer_id": self.customer_id}),
+			1,
+			"a disagreement on an existing action must never create a second one",
+		)
+
+		refreshed = frappe.get_doc("Collection Action", self.existing_action.name)
+		self.assertEqual(refreshed.action_type, "Escalate Collection", "AI review must never change an existing action's type")
+		self.assertEqual(refreshed.ai_agreed_with_rules, 0)
+		self.assertEqual(refreshed.ai_proposed_action, "Immediate Follow-up")
+		self.assertEqual(refreshed.rule_proposed_action, "Escalate Collection")
+		self.assertAlmostEqual(refreshed.ai_confidence, 0.76, places=2)
+
+		self.assertTrue(
+			frappe.get_all(
+				"Risk Audit Log",
+				filters={"external_invoice_id": self.external_invoice_id, "source": "AI Agent"},
+			),
+			"a disagreement on an existing action must leave an audit trail too",
+		)
+
+	def test_agreement_annotates_but_does_not_log_an_audit_event(self):
+		row = frappe._dict(
+			{
+				"assessment_name": self.assessment.name,
+				"external_invoice_id": self.external_invoice_id,
+				"customer_id": self.customer_id,
+				"customer_name": "Test ApplyVerdict Co",
+				"risk_score": 90,
+			}
+		)
+		rule_action = {"action_type": "Escalate Collection", "priority": "High", "due_date": None, "notes": "rule"}
+		meta = {
+			"ai_proposed_action": "Escalate Collection",
+			"ai_reasoning": "Matches rule baseline.",
+			"ai_confidence": 0.95,
+			"agreed": 1,
+			"outcome": "agreed",
+		}
+
+		_apply_verdict(row, rule_action, rule_action, meta, "TEST-RUN-1", frappe.utils.today())
+
+		refreshed = frappe.get_doc("Collection Action", self.existing_action.name)
+		self.assertEqual(refreshed.ai_agreed_with_rules, 1)
+		self.assertFalse(
+			frappe.get_all("Risk Audit Log", filters={"external_invoice_id": self.external_invoice_id, "source": "AI Agent"}),
+			"a plain agreement shouldn't clutter the audit trail the way a disagreement does",
+		)
+
+	def _create_customer(self):
+		customer = frappe.new_doc("Receivables Customer")
+		customer.customer_id = self.customer_id
+		customer.customer_name = "Test ApplyVerdict Co"
+		customer.total_invoices = 1
+		customer.open_invoice_count = 1
+		customer.total_invoice_amount = 50000
+		customer.open_amount = 50000
+		customer.risk_score = 90
+		customer.risk_level = "High"
+		customer.risk_last_calculated_on = now_datetime()
+		customer.insert(ignore_permissions=True)
+		return customer
+
+	def _create_invoice(self):
+		invoice = frappe.new_doc("Receivables Invoice")
+		invoice.invoice_id = self.external_invoice_id
+		invoice.receivables_customer = self.customer.name
+		invoice.customer_id = self.customer_id
+		invoice.customer_name = "Test ApplyVerdict Co"
+		invoice.posting_date = "2020-01-01"
+		invoice.due_date = "2020-01-15"
+		invoice.invoice_amount = 50000
+		invoice.is_open = 1
+		invoice.days_overdue = 66
+		invoice.status = "Overdue"
+		invoice.late_payment_status = "Unknown"
+		invoice.insert(ignore_permissions=True)
+		return invoice
+
+	def _create_assessment(self):
+		assessment = frappe.new_doc("Invoice Risk Assessment")
+		assessment.receivables_customer = self.customer.name
+		assessment.receivables_invoice = self.invoice.name
+		assessment.external_invoice_id = self.external_invoice_id
+		assessment.customer_id = self.customer_id
+		assessment.customer_name = "Test ApplyVerdict Co"
+		assessment.risk_score = 90
+		assessment.risk_level = "High"
+		assessment.days_overdue = 66
+		assessment.is_open = 1
+		assessment.insert(ignore_permissions=True)
+		return assessment
+
+	def _create_existing_action(self):
+		action = frappe.new_doc("Collection Action")
+		action.receivables_customer = self.customer.name
+		action.receivables_invoice = self.invoice.name
+		action.invoice_risk_assessment = self.assessment.name
+		action.external_invoice_id = self.external_invoice_id
+		action.customer_id = self.customer_id
+		action.customer_name = "Test ApplyVerdict Co"
+		action.action_type = "Escalate Collection"
+		action.priority = "High"
+		action.due_date = frappe.utils.today()
+		action.status = "Proposed"
+		action.insert(ignore_permissions=True)
+		action.status = "Open"
+		action.save(ignore_permissions=True)
+		return action
