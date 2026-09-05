@@ -588,6 +588,39 @@ def run_ai_review(run_name):
 		run_name=run_name,
 	)
 
+	if run.receivables_import_job and not rows:
+		# A batch-scoped run finding nothing is ambiguous on its own: either
+		# there's genuinely nothing left to review, or the batch is a zombie --
+		# a Receivables Import Job record that still exists (batches are kept
+		# for audit history even after a reset) but whose invoices were
+		# deleted by a later wipe, most commonly demo_reset.sh. Both looked
+		# identical as a bare assessments_in_scope: 0 -- hit this for real
+		# scoping a review at a batch a later demo reset had already wiped.
+		# Distinguishing them here means the run record explains itself
+		# instead of a human having to go query Receivables Batch Member by
+		# hand to find out which case they're in.
+		batch_member_count = frappe.db.count(
+			"Receivables Batch Member", {"receivables_import_job": run.receivables_import_job}
+		)
+		if batch_member_count == 0:
+			run.db_set(
+				{
+					"status": "Completed",
+					"completed_on": now_datetime(),
+					"assessments_in_scope": 0,
+					"error_summary": (
+						f"Import batch {run.receivables_import_job} has no live invoices. "
+						"The batch record still exists for audit history, but its data was "
+						"removed by a later reset (most likely a demo reset) after this batch "
+						"was originally imported. Point this run at the current batch instead, "
+						"or leave Import Batch blank to review across all open assessments."
+					),
+				},
+				update_modified=False,
+			)
+			frappe.db.commit()
+			return {"status": "Completed", "reason": "stale_batch", "assessments_in_scope": 0}
+
 	counters = {
 		"assessments_in_scope": len(rows),
 		"assessments_reviewed": 0,

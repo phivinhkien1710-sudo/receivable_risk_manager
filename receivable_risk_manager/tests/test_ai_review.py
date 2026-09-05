@@ -9,6 +9,7 @@ integration path that would need Claude to be reachable.
 """
 
 import unittest
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -340,3 +341,47 @@ class TestApplyVerdictOnExistingAction(FrappeTestCase):
 		action.status = "Open"
 		action.save(ignore_permissions=True)
 		return action
+
+
+class TestRunAiReviewStaleBatch(FrappeTestCase):
+	"""run_ai_review() against an Import Batch whose invoices were already
+	wiped -- the exact trap demo_reset.sh creates for any older batch once a
+	newer reset has run: the Receivables Import Job record survives (kept
+	for audit history) but every Receivables Batch Member it referenced is
+	gone. Confirmed against real data on staging.local: AIRV-00007, scoped to
+	a batch a later reset had wiped, returned assessments_in_scope: 0 with no
+	explanation -- indistinguishable from "genuinely nothing new to review."
+	"""
+
+	def setUp(self):
+		self.job = frappe.new_doc("Receivables Import Job")
+		self.job.status = "Completed"
+		self.job.csv_file = "/private/files/does-not-need-to-exist-for-this-test.csv"
+		self.job.as_of_date = frappe.utils.today()
+		self.job.insert(ignore_permissions=True)
+		frappe.db.commit()
+
+	def tearDown(self):
+		frappe.db.delete("AI Review Run", {"receivables_import_job": self.job.name})
+		frappe.delete_doc("Receivables Import Job", self.job.name, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+	def test_stale_batch_with_zero_members_gets_a_clear_message(self):
+		from receivable_risk_manager.services.ai_review import run_ai_review
+
+		run = frappe.new_doc("AI Review Run")
+		run.receivables_import_job = self.job.name
+		run.run_trigger = "Manual"
+		run.insert(ignore_permissions=True)
+		frappe.db.commit()
+
+		with patch("receivable_risk_manager.services.ai_review.claude_cli_available", return_value=True):
+			result = run_ai_review(run.name)
+
+		self.assertEqual(result["status"], "Completed")
+		self.assertEqual(result["reason"], "stale_batch")
+
+		refreshed = frappe.get_doc("AI Review Run", run.name)
+		self.assertEqual(refreshed.status, "Completed")
+		self.assertIn("no live invoices", refreshed.error_summary)
+		self.assertIn(self.job.name, refreshed.error_summary)
