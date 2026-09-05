@@ -8,17 +8,19 @@
 # steps one by one.
 #
 # Usage:
-#   ./scripts/demo_setup.sh <site-name> [csv-path] [row-limit]
+#   ./scripts/demo_setup.sh <site-name> [csv-path] [row-limit] [wipe-first]
 #
 # Examples:
 #   ./scripts/demo_setup.sh staging.local
 #   ./scripts/demo_setup.sh staging.local local_data/dataset_clean.csv 2000
+#   ./scripts/demo_setup.sh staging.local local_data/dataset_clean.csv 500 wipe
 
 set -euo pipefail
 
-SITE="${1:?Usage: $0 <site-name> [csv-path] [row-limit]}"
+SITE="${1:?Usage: $0 <site-name> [csv-path] [row-limit] [wipe-first]}"
 CSV_PATH="${2:-local_data/dataset_clean.csv}"
 ROW_LIMIT="${3:-2000}"
+WIPE_FIRST="${4:-}"
 
 BENCH_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 ABS_CSV_PATH="$BENCH_ROOT/apps/receivable_risk_manager/$CSV_PATH"
@@ -44,6 +46,11 @@ if ! bench --site "$SITE" migrate; then
 	echo "Continuing, since the receivables_risk tables may already be in place."
 	echo "If the import step below fails with a schema error, fix the bench's"
 	echo "migrate state first (bench --site $SITE migrate for the full traceback)."
+fi
+
+if [ "$WIPE_FIRST" = "wipe" ]; then
+	echo "== Wiping existing receivables data first (bulk SQL, not per-record) =="
+	bench --site "$SITE" execute receivable_risk_manager.services.demo_reset.wipe_all_receivables_data
 fi
 
 echo "== Importing up to $ROW_LIMIT rows from $CSV_PATH =="
