@@ -5,7 +5,7 @@
  "creation": "2026-06-23 13:04:43.681562",
  "doctype": "DocType",
  "engine": "InnoDB",
-  "field_order": [
+ "field_order": [
   "invoice_id",
   "doc_id",
   "receivables_customer",
@@ -191,7 +191,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-23 14:00:36.045973",
+ "modified": "2026-09-05 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "receivable_risk_manager",
  "name": "Receivables Invoice",
@@ -245,5 +245,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "customer_name"
 }
