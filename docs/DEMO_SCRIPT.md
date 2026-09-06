@@ -12,13 +12,50 @@ moments are the disagreements.
 
 ---
 
+## Setup — first time on a new machine
+
+If you're starting from a fresh clone rather than an existing bench, do this
+first. `<site>` and `<port>` below are whatever `install.sh` printed for
+you — it defaults to `receivables-risk.local` on port `8080`, but confirm from
+your own terminal output rather than assuming.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/phivinhkien1710-sudo/receivable_risk_manager/v1.1.0/install.sh | bash
+```
+
+This installs the app with **no data** — the dataset is a public, non-PII
+benchmark, but it's gitignored for repo-size reasons, so it isn't part of the
+clone. Get it from this release's assets:
+
+```bash
+# Download demo_500_open.csv from:
+# https://github.com/phivinhkien1710-sudo/receivable_risk_manager/releases/tag/v1.1.0
+# Save it to:
+apps/receivable_risk_manager/local_data/demo_500_open.csv
+```
+
+Then load it in — same command as the reset step below, just for the first
+time:
+
+```bash
+./apps/receivable_risk_manager/scripts/demo_reset.sh <site>
+```
+
+**One dependency `install.sh` cannot set up for you**: the Claude CLI needs to
+be logged in and reachable by whatever machine runs the background worker,
+under whatever subscription this demo should bill to. Run `claude login`
+before attempting an AI Review Run — see the checklist below for how to
+confirm it's actually reachable, not just installed.
+
+---
+
 ## Before you hit record
 
 **Environment checklist** (all of these matter, each has bitten this app for real):
 
 ```bash
 # 1. Web server up
-curl -sI http://staging.local:8001 | head -1        # expect: HTTP/1.1 200 OK
+curl -sI http://<site>:<port> | head -1        # expect: HTTP/1.1 200 OK
 
 # 2. Exactly ONE worker running -- a duplicate worker caused a 20x slowdown
 ps aux | grep "bench_helper frappe worker" | grep -v grep
@@ -26,24 +63,26 @@ ps aux | grep "bench_helper frappe worker" | grep -v grep
 # AI review take 20+ minutes per chunk instead of ~60 seconds.
 
 # 3. Claude CLI reachable BY THE WORKER (not just your shell)
-bench --site staging.local console <<'EOF'
+bench --site <site> console <<'EOF'
 from receivable_risk_manager.services.ai_review import claude_cli_available
 print("CLI reachable:", claude_cli_available())
 EOF
 ```
 
-**Reset to a clean demo dataset** (~7 seconds):
+**Reset to a clean demo dataset** (~7 seconds — safe to re-run anytime,
+including right before recording, to guarantee a clean state):
 
 ```bash
 cd /path/to/frappe-bench
-./apps/receivable_risk_manager/scripts/demo_reset.sh staging.local
+./apps/receivable_risk_manager/scripts/demo_reset.sh <site>
 ```
 
 This wipes existing receivables data and re-imports 498 open invoices through
 the real `Receivables Import Job` path, so batch tracking is populated and the
 Batch Workflow menu has something to attach to.
 
-**Login:** `http://staging.local:8001` — `Administrator`
+**Login:** `http://<site>:<port>` — `Administrator` (password is in
+`~/passwords.txt` after a fresh `install.sh` run)
 
 **Recording tip:** the AI review itself takes roughly **60–90 seconds** for a
 20-row run. That's real dead air. Either cut it in post, timelapse it, or use
