@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 4px;
+  }
+  h1 { font-size: 20pt; border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 0; }
+  h2 { font-size: 15pt; margin-top: 28px; border-bottom: 1px solid #ccc; padding-bottom: 4px; page-break-after: avoid; }
+  h3 { font-size: 12.5pt; margin-top: 18px; page-break-after: avoid; }
+  hr { border: none; border-top: 1px solid #ccc; margin: 18px 0; }
+  code {
+    background: #f2f2f2;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 9.5pt;
+  }
+  pre {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th { background: #eee; }
+  blockquote {
+    border-left: 3px solid #999;
+    margin: 10px 0;
+    padding: 4px 14px;
+    color: #333;
+    background: #fafafa;
+  }
+  strong { color: #000; }
+</style>
+</head>
+<body>
+<h1 id="demo-script-agentic-ai-hackathon">Demo Script — Agentic AI Hackathon</h1>
+<p>A step-by-step recording guide for a ~4–5 minute demo video, built around the
+AI review loop rather than the rule-based reporting underneath it.</p>
+<p><strong>The story this demo tells:</strong> a deterministic rule engine scores every overdue
+invoice cheaply and unattended. An AI agent then re-examines those decisions
+with context the rules structurally cannot see — the customer's payment
+history and total exposure — and either backs the rules, escalates beyond
+them, or argues against them. A human approves everything. The interesting
+moments are the disagreements.</p>
+<hr />
+<h2 id="setup-first-time-on-a-new-machine">Setup — first time on a new machine</h2>
+<p>If you're starting from a fresh clone rather than an existing bench, do this
+first. <code>&lt;site&gt;</code> and <code>&lt;port&gt;</code> below are whatever <code>install.sh</code> printed for
+you — it defaults to <code>receivables-risk.local</code> on port <code>8080</code>, but confirm from
+your own terminal output rather than assuming.</p>
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/phivinhkien1710-sudo/receivable_risk_manager/v1.1.0/install.sh | bash
+</code></pre>
+<p>This installs the app with <strong>no data</strong> — the dataset is a public, non-PII
+benchmark, but it's gitignored for repo-size reasons, so it isn't part of the
+clone. Get it from this release's assets:</p>
+<pre><code class="language-bash"># Download demo_500_open.csv from:
+# https://github.com/phivinhkien1710-sudo/receivable_risk_manager/releases/tag/v1.1.0
+# Save it to:
+apps/receivable_risk_manager/local_data/demo_500_open.csv
+</code></pre>
+<p>Then load it in — same command as the reset step below, just for the first
+time:</p>
+<pre><code class="language-bash">./apps/receivable_risk_manager/scripts/demo_reset.sh &lt;site&gt;
+</code></pre>
+<p><strong>One dependency <code>install.sh</code> cannot set up for you</strong>: the Claude CLI needs to
+be logged in and reachable by whatever machine runs the background worker,
+under whatever subscription this demo should bill to. Run <code>claude login</code>
+before attempting an AI Review Run — see the checklist below for how to
+confirm it's actually reachable, not just installed.</p>
+<hr />
+<h2 id="before-you-hit-record">Before you hit record</h2>
+<p><strong>Environment checklist</strong> (all of these matter, each has bitten this app for real):</p>
+<pre><code class="language-bash"># 1. Web server up
+curl -sI http://&lt;site&gt;:&lt;port&gt; | head -1        # expect: HTTP/1.1 200 OK
+
+# 2. Exactly ONE worker running -- a duplicate worker caused a 20x slowdown
+ps aux | grep &quot;bench_helper frappe worker&quot; | grep -v grep
+# If two appear, kill the non-launchd one. Two workers competing made an
+# AI review take 20+ minutes per chunk instead of ~60 seconds.
+
+# 3. Claude CLI reachable BY THE WORKER (not just your shell)
+bench --site &lt;site&gt; console &lt;&lt;'EOF'
+from receivable_risk_manager.services.ai_review import claude_cli_available
+print(&quot;CLI reachable:&quot;, claude_cli_available())
+EOF
+</code></pre>
+<p><strong>Reset to a clean demo dataset</strong> (~7 seconds — safe to re-run anytime,
+including right before recording, to guarantee a clean state):</p>
+<pre><code class="language-bash">cd /path/to/frappe-bench
+./apps/receivable_risk_manager/scripts/demo_reset.sh &lt;site&gt;
+</code></pre>
+<p>This wipes existing receivables data and re-imports 498 open invoices through
+the real <code>Receivables Import Job</code> path, so batch tracking is populated and the
+Batch Workflow menu has something to attach to.</p>
+<p><strong>Login:</strong> <code>http://&lt;site&gt;:&lt;port&gt;</code> — <code>Administrator</code> (password is in
+<code>~/passwords.txt</code> after a fresh <code>install.sh</code> run)</p>
+<p><strong>Recording tip:</strong> the AI review itself takes roughly <strong>60–90 seconds</strong> for a
+20-row run. That's real dead air. Either cut it in post, timelapse it, or use
+the waiting time for the voiceover section explaining what the agent is doing.</p>
+<hr />
+<h2 id="scene-1-the-problem-20s">Scene 1 — The problem (~20s)</h2>
+<p><strong>Navigate:</strong> <code>Receivables Invoice</code> list</p>
+<p>📸 <strong>Capture:</strong> the invoice list showing 498 rows.</p>
+<p><strong>Point out:</strong> every row is an overdue invoice. A human cannot read 498 of
+these and decide what to chase first. Neither can they read 48,000, which is
+what the full dataset holds.</p>
+<hr />
+<h2 id="scene-2-import-with-batch-tracking-30s">Scene 2 — Import with batch tracking (~30s)</h2>
+<p><strong>Navigate:</strong> <code>Receivables Import Job</code> → open the most recent completed job</p>
+<p>📸 <strong>Capture:</strong> the completed job showing row counts (498 valid rows imported).</p>
+<p><strong>Point out:</strong> the import is batch-tracked — every invoice it brought in is
+recorded as a member of this specific batch, so every later stage can be
+scoped to "just this import" instead of the whole database.</p>
+<p>📸 <strong>Capture:</strong> click the <strong>Batch Workflow</strong> menu to show the dropdown:
+<code>Run AI Review</code>, <code>Review Proposals</code>, <code>Disagreements Only</code>, <code>AI Review History</code>.</p>
+<p><strong>Point out:</strong> this menu is the spine of the workflow. Each entry opens a
+pre-filled form or a scoped queue — nothing starts a stage by itself.</p>
+<hr />
+<h2 id="scene-3-launching-the-agent-30s">Scene 3 — Launching the agent (~30s)</h2>
+<p><strong>Navigate:</strong> <code>Batch Workflow</code> → <code>Run AI Review</code></p>
+<p>📸 <strong>Capture:</strong> the new AI Review Run form with <strong>Import Batch</strong> pre-filled.</p>
+<p><strong>Set <code>Limit Rows</code> to 20</strong> — keeps the demo tight and the run around 60–90s.</p>
+<p><strong>Save</strong>, then click <strong>Start Review</strong>.</p>
+<p>📸 <strong>Capture:</strong> the confirmation dialog, which states plainly that nothing is
+sent to any customer and every proposal still needs approval.</p>
+<p><strong>Point out:</strong> an AI Review Run is a <em>visible unit of work</em>. It's started
+deliberately by a human, scoped to a batch, and it records exactly what it
+looked at and what it decided. Nothing about the agent's judgment happens
+invisibly inside a cron job.</p>
+<hr />
+<h2 id="scene-4-what-the-agent-actually-sees-40s-over-the-waiting-time">Scene 4 — What the agent actually sees (~40s, over the waiting time)</h2>
+<p>While the run executes, explain the mechanism. Optionally show the prompt file
+on screen: <code>receivable_risk_manager/services/prompts/invoice_review_instructions.md</code></p>
+<p>📸 <strong>Capture (optional):</strong> the system prompt, scrolled to the "How to judge"
+section.</p>
+<p><strong>Point out:</strong> the agent is never shown a blank slate. Every invoice it
+reviews carries the rule engine's own recommendation as <code>rule_recommended_action</code>.
+It's not asked "what should happen here" — it's asked "here's what the rules
+already decided; does the fuller picture change that?"</p>
+<p>The fuller picture is the part rules can't see:
+- <strong>Pattern vs. anomaly</strong> — a customer who always pays 42 days late being 45
+  days late is behaving normally. A customer who always pays on time being 45
+  days late is a real signal.
+- <strong>Concentration of exposure</strong> — one invoice may be small, but the customer
+  may owe millions across dozens of other open invoices.</p>
+<hr />
+<h2 id="scene-5-the-results-40s">Scene 5 — The results (~40s)</h2>
+<p><strong>Navigate:</strong> the AI Review Run, once status reads <code>Completed</code></p>
+<p>📸 <strong>Capture:</strong> the Results section counters.</p>
+<p>Real numbers from an actual run (<code>AIRV-00013</code>, 20 rows, 69 seconds):</p>
+<table>
+<thead>
+<tr>
+<th>Counter</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reviewed</td>
+<td>20</td>
+<td>assessments the agent examined</td>
+</tr>
+<tr>
+<td>Proposed Action</td>
+<td>20</td>
+<td>some action warranted</td>
+</tr>
+<tr>
+<td>Actions Created</td>
+<td>5</td>
+<td>genuinely new Collection Actions</td>
+</tr>
+<tr>
+<td>Already Had An Action</td>
+<td>15</td>
+<td>existing action re-annotated, not duplicated</td>
+</tr>
+<tr>
+<td>Agreed With Rules</td>
+<td>11</td>
+<td>agent backed the rule engine</td>
+</tr>
+<tr>
+<td><strong>Disagreed With Rules</strong></td>
+<td><strong>9</strong></td>
+<td><strong>the rows worth a human's time</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Point out:</strong> the run cannot claim work it didn't do. "Proposed 20" and
+"created 5" are deliberately separate numbers — an earlier version reported
+only the former and was effectively lying about its own output.</p>
+<p>📸 <strong>Capture:</strong> the orange headline alert — <em>"Claude disagreed with the rule
+engine on 9 of 20 invoices reviewed."</em></p>
+<hr />
+<h2 id="scene-6-the-disagreements-the-payoff-60s">Scene 6 — The disagreements (the payoff, ~60s)</h2>
+<p><strong>Navigate:</strong> click <strong>Review Disagreements</strong> on the run</p>
+<p>📸 <strong>Capture:</strong> Collection Action Queue, filtered to this run's disagreements.</p>
+<p>📸 <strong>Capture:</strong> the columns side by side — <strong>Rule Said</strong>, <strong>AI Said</strong>,
+<strong>Agreed</strong>, <strong>AI Confidence</strong>, <strong>AI Reasoning</strong>.</p>
+<p><strong>Open one disagreement.</strong> Real examples from actual runs:</p>
+<blockquote>
+<p><strong>Agent escalating beyond the rules</strong> — <em>"COSTCO normally pays only 4.1 days
+late but is 74 days overdue — a dramatic departure from pattern. Customer has
+$2.29M open exposure."</em> The rules saw one overdue invoice; the agent saw a
+reliable customer behaving abnormally at scale.</p>
+<p><strong>Agent arguing for less</strong> — on <code>BJ'S us</code>, 66 days overdue: <em>"a large,
+normally reliable customer, 1.4-day average delay… too anomalous for routine
+escalation; investigate."</em> It proposed <code>Immediate Follow-up</code> instead of the
+rules' <code>Escalate Collection</code>.</p>
+</blockquote>
+<p><strong>Point out — this is the safety story, say it explicitly:</strong></p>
+<p>The agent may escalate above the rule baseline on its own authority, and that
+proposal is used directly. But when it argues for something <em>less</em> severe, the
+rule's action stays in force — the disagreement is recorded for a human to
+adjudicate, not applied. An LLM never silently talks this system out of
+chasing a debt. Worst case, a human spends ten seconds rejecting a proposal.</p>
+<p>Two more gates worth naming:
+- Below a confidence threshold, the agent's verdict is discarded entirely and
+  the rules decide alone.
+- A malformed or unrecognized response sorts as "No Action," so it can never
+  outrank the rules by accident.</p>
+<hr />
+<h2 id="scene-7-human-in-the-loop-30s">Scene 7 — Human in the loop (~30s)</h2>
+<p><strong>Navigate:</strong> open a <code>Proposed</code> Collection Action</p>
+<p>📸 <strong>Capture:</strong> the workflow buttons — <strong>Approve</strong> / <strong>Reject</strong>.</p>
+<p><strong>Click Approve.</strong></p>
+<p>📸 <strong>Capture:</strong> status transitioning <code>Proposed</code> → <code>Open</code>.</p>
+<p><strong>Point out:</strong> nothing the agent proposes takes effect until a human with the
+Accounts Manager role approves it. The agent's entire output is proposals.</p>
+<hr />
+<h2 id="scene-8-the-audit-trail-20s">Scene 8 — The audit trail (~20s)</h2>
+<p><strong>Navigate:</strong> <code>Risk Audit Log</code>, filter by the invoice you just approved</p>
+<p>📸 <strong>Capture:</strong> entries tagged <code>Source = AI Agent</code> alongside <code>Pipeline</code>,
+<code>Invoice Risk</code>, <code>Customer Risk</code>.</p>
+<p><strong>Point out:</strong> every scoring decision, every agent verdict, and every
+disagreement leaves an entry. You can reconstruct why the system concluded
+anything, months later.</p>
+<hr />
+<h2 id="closing-frame-20s">Closing frame (~20s)</h2>
+<p><strong>What runs unattended:</strong> customer aggregation, risk scoring, invoice
+assessment, and stale-action escalation — all deterministic, all cheap.</p>
+<p><strong>What a human deliberately starts:</strong> every piece of AI judgment.</p>
+<p><strong>What is never automated:</strong> contacting a customer. The app produces
+proposals; a person decides.</p>
+<hr />
+<h2 id="screenshot-inventory">Screenshot inventory</h2>
+<p>Capture these; they're the ones that carry the story on their own:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Invoice list, 498 rows</td>
+<td>the scale problem</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Completed import job</td>
+<td>batch tracking exists</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Batch Workflow menu open</td>
+<td>the workflow spine</td>
+</tr>
+<tr>
+<td>4</td>
+<td>AI Review Run form, batch pre-filled</td>
+<td>deliberate human trigger</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Confirmation dialog</td>
+<td>nothing is sent, approval required</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Results counters</td>
+<td>honest self-reporting</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Disagreement headline alert</td>
+<td>the hook</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Queue: Rule Said / AI Said / Reasoning</td>
+<td>the core product surface</td>
+</tr>
+<tr>
+<td>9</td>
+<td>One disagreement, full reasoning</td>
+<td>the agent's actual judgment</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Approve → Open transition</td>
+<td>human in the loop</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Risk Audit Log, Source = AI Agent</td>
+<td>explainability</td>
+</tr>
+</tbody>
+</table>
+<p>Existing screenshots in <code>screenshots/</code> (<code>collection-action-queue.png</code>,
+<code>customer-risk-overview.png</code>, <code>invoice-collection-priority.png</code>,
+<code>receivables-customer-list.png</code>, <code>receivables-invoice-list.png</code>) predate the AI
+review feature and show the older rule-only flow — recapture rather than reuse
+for anything AI-related.</p>
+</body>
+</html>
