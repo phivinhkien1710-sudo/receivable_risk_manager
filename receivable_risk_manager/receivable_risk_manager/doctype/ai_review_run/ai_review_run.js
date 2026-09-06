@@ -46,6 +46,7 @@ frappe.ui.form.on("AI Review Run", {
 			frm.add_custom_button(__("Review Disagreements"), () => {
 				frappe.set_route("query-report", "Collection Action Queue", {
 					ai_review_run: frm.doc.name,
+					status: "Proposed",
 					disagreements_only: 1,
 				});
 			});

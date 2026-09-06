@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import cint
 
 
 def execute(filters=None):
@@ -10,6 +11,13 @@ def execute(filters=None):
 
 def get_columns():
 	return [
+		{
+			"label": "Collection Action",
+			"fieldname": "name",
+			"fieldtype": "Link",
+			"options": "Collection Action",
+			"width": 130,
+		},
 		{
 			"label": "External Invoice ID",
 			"fieldname": "external_invoice_id",
@@ -105,6 +113,7 @@ def get_data(filters):
 		"Collection Action",
 		filters=report_filters,
 		fields=[
+			"name",
 			"external_invoice_id",
 			"customer_id",
 			"customer_name",
@@ -155,7 +164,7 @@ def build_report_filters(filters):
 
 	# The whole reason AI review is worth running: surface only the invoices
 	# where Claude and the rule engine reached different conclusions.
-	if filters.get("disagreements_only"):
+	if cint(filters.get("disagreements_only")):
 		report_filters["ai_agreed_with_rules"] = 0
 
 	return report_filters

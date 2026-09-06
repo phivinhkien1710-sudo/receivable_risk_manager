@@ -439,7 +439,15 @@ def reconcile(rule_action, verdict, min_confidence):
 	return None, meta
 
 
-def _apply_verdict(row, rule_action, final_action, meta, run_name, analysis_date):
+def _apply_verdict(
+	row,
+	rule_action,
+	final_action,
+	meta,
+	run_name,
+	analysis_date,
+	receivables_import_job=None,
+):
 	"""Persist one reviewed assessment and create its Collection Action, if any."""
 
 	frappe.db.set_value(
@@ -527,6 +535,7 @@ def _apply_verdict(row, rule_action, final_action, meta, run_name, analysis_date
 			"ai_confidence": meta.get("ai_confidence"),
 			"ai_agreed_with_rules": meta.get("agreed", 1),
 			"ai_review_run": run_name,
+			"receivables_import_job": receivables_import_job,
 		}
 	)
 	doc.save(ignore_permissions=True)
@@ -689,7 +698,15 @@ def run_ai_review(run_name):
 				final_action, meta = reconcile(
 					rule_action, verdicts.get(row.external_invoice_id), settings["min_confidence"]
 				)
-				outcome = _apply_verdict(row, rule_action, final_action, meta, run_name, analysis_date)
+				outcome = _apply_verdict(
+					row,
+					rule_action,
+					final_action,
+					meta,
+					run_name,
+					analysis_date,
+					receivables_import_job=run.receivables_import_job,
+				)
 
 				counters["assessments_reviewed"] += 1
 				if final_action:

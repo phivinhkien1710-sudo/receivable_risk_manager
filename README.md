@@ -52,6 +52,8 @@ This is not a production credit-risk system. It is an MVP-style engineering proj
 The screenshots below show the main dataset and reporting views in Frappe Desk.
 See [`docs/screenshot_checklist.md`](docs/screenshot_checklist.md) for the
 click-by-click capture order used to produce these.
+For a timed presenter script with speaking notes, success checks, fallback
+paths, and a complete screenshot plan, see [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md).
 
 ### Imported Receivables Invoice Data
 

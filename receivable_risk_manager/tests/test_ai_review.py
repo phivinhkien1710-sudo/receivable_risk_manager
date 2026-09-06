@@ -200,6 +200,8 @@ class TestApplyVerdictOnExistingAction(FrappeTestCase):
 		self.customer = self._create_customer()
 		self.invoice = self._create_invoice()
 		self.assessment = self._create_assessment()
+		self.import_job = self._create_import_job()
+		self.ai_review_run = self._create_ai_review_run()
 		self.existing_action = self._create_existing_action()
 
 	def tearDown(self):
@@ -207,6 +209,8 @@ class TestApplyVerdictOnExistingAction(FrappeTestCase):
 			for row in frappe.get_all(dt, filters={"customer_id": self.customer_id}, fields=["name"]):
 				frappe.delete_doc(dt, row.name, force=True, ignore_permissions=True)
 		frappe.delete_doc("Receivables Customer", self.customer.name, force=True, ignore_permissions=True)
+		frappe.delete_doc("AI Review Run", self.ai_review_run.name, force=True, ignore_permissions=True)
+		frappe.delete_doc("Receivables Import Job", self.import_job.name, force=True, ignore_permissions=True)
 		frappe.db.commit()
 
 	def test_disagreement_annotates_existing_action_without_changing_its_type(self):
@@ -281,6 +285,49 @@ class TestApplyVerdictOnExistingAction(FrappeTestCase):
 			"a plain agreement shouldn't clutter the audit trail the way a disagreement does",
 		)
 
+	def test_new_action_keeps_the_batch_used_for_the_review(self):
+		frappe.delete_doc("Collection Action", self.existing_action.name, force=True, ignore_permissions=True)
+		row = frappe._dict(
+			{
+				"assessment_name": self.assessment.name,
+				"external_invoice_id": self.external_invoice_id,
+				"customer_id": self.customer_id,
+				"customer_name": "Test ApplyVerdict Co",
+				"risk_score": 90,
+			}
+		)
+		rule_action = {"action_type": "Send Reminder", "priority": "Medium", "due_date": None, "notes": "rule"}
+		meta = {
+			"ai_proposed_action": "Escalate Collection",
+			"ai_reasoning": "Customer context requires escalation.",
+			"ai_confidence": 0.9,
+			"agreed": 0,
+			"outcome": "ai_escalated",
+		}
+		final_action = {
+			"action_type": "Escalate Collection",
+			"priority": "High",
+			"due_date": None,
+			"notes": "AI escalation",
+		}
+
+		outcome = _apply_verdict(
+			row,
+			rule_action,
+			final_action,
+			meta,
+			self.ai_review_run.name,
+			frappe.utils.today(),
+			receivables_import_job=self.import_job.name,
+		)
+
+		self.assertEqual(outcome, "created")
+		action = frappe.get_doc(
+			"Collection Action",
+			{"customer_id": self.customer_id, "action_type": "Escalate Collection"},
+		)
+		self.assertEqual(action.receivables_import_job, self.import_job.name)
+
 	def _create_customer(self):
 		customer = frappe.new_doc("Receivables Customer")
 		customer.customer_id = self.customer_id
@@ -324,6 +371,20 @@ class TestApplyVerdictOnExistingAction(FrappeTestCase):
 		assessment.is_open = 1
 		assessment.insert(ignore_permissions=True)
 		return assessment
+
+	def _create_import_job(self):
+		job = frappe.new_doc("Receivables Import Job")
+		job.status = "Completed"
+		job.csv_file = "/private/files/test-batch.csv"
+		job.as_of_date = frappe.utils.today()
+		job.insert(ignore_permissions=True)
+		return job
+
+	def _create_ai_review_run(self):
+		run = frappe.new_doc("AI Review Run")
+		run.receivables_import_job = self.import_job.name
+		run.insert(ignore_permissions=True)
+		return run
 
 	def _create_existing_action(self):
 		action = frappe.new_doc("Collection Action")

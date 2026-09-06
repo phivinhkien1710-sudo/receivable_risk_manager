@@ -112,7 +112,7 @@ def stamp_batch_on_downstream_records(job_name):
 			doctype,
 			filters={
 				"external_invoice_id": ["in", invoice_ids],
-				"receivables_import_job": ["in", [None, ""]],
+				"receivables_import_job": ["is", "not set"],
 			},
 			fields=["name"],
 			limit_page_length=0,
